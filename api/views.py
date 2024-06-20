@@ -5,31 +5,29 @@ from rest_framework.response import Response
 from . models import *
 from . serializer import *
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import action
+from rest_framework.decorators import action,authentication_classes,permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .pagination import CustomPagination
 from django.db.models import Q
 from datetime import datetime
-
-
-# Create your views here.
-# class PointingViewSet(viewsets.ViewSet):
-    
-#     def create(self,request):
-#         serializer = PointingSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data,status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-#     @action(detail=False,methods=["get"])
-    
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
+from .permissions import IsCompanyAdmin
     
 
 
 
 class CompanyViewSet(viewsets.ViewSet):
+    permission_classes_by_action = {"employes":[IsCompanyAdmin] }
+    
+    def get_permissions(self):
+        try:
+            # Return permission_classes depending on `action`
+            return [permission() for permission in self.permission_classes_by_action.get(self.action, [IsAdminUser])]
+        except KeyError:
+            # Default to AllowAny if not specified otherwise
+            return [IsAdminUser()]
     
     
     def list(self,request):
@@ -67,7 +65,19 @@ class CompanyViewSet(viewsets.ViewSet):
     
 
 class EmployeViewSet(viewsets.ViewSet):
-
+    permission_classes_by_action = {'check_in': [IsAuthenticated],
+                                    'pointings':[IsCompanyAdmin],
+                                    'create':[IsCompanyAdmin],
+                                    'list':[IsAdminUser],
+                                    }
+    
+    def get_permissions(self):
+        try:
+            # Return permission_classes depending on `action`
+            return [permission() for permission in self.permission_classes_by_action.get(self.action, [AllowAny])]
+        except KeyError:
+            # Default to AllowAny if not specified otherwise
+            return [AllowAny()]
     
     def list(self,request):
         queryset = Employe.objects.all()
@@ -149,4 +159,52 @@ class EmployeViewSet(viewsets.ViewSet):
         
         serializer = PointingSerializer(page,many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+
+
+class CompanyAdminViewSet(viewsets.ViewSet):
+    
+    permission_classes_by_action = {"login":[AllowAny]}
+    
+    def get_permissions(self):
+        try:
+            # Return permission_classes depending on `action`
+            return [permission() for permission in self.permission_classes_by_action.get(self.action, [IsCompanyAdmin])]
+        except KeyError:
+            # Default to AllowAny if not specified otherwise
+            return [IsCompanyAdmin()]
+    
+    
+    def create(self,request):
+        serializer = CompanyAdminSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False,methods=["post"])
+    def login(self,request):
+        try:
+            username = request.data["username"]
+            password = request.data["password"]
+            
+            user = authenticate(
+            username = username,
+            password = password
+        )
+            if user:
+                if hasattr(user,'company_admin'):
+                    tokens = RefreshToken.for_user(user)
+                    return Response({
+                        "id":user.id,
+                        "access":str(tokens.access_token),
+                        "is_companyAdmin":True,
+                        "company_id":user.company_admin.company.id
+                    },status=status.HTTP_200_OK)
+                else:
+                    return Response({"message":"User is not a company admin"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"message":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
+        except KeyError:
+            return Response({"message":"Please provide username and password"},status=status.HTTP_400_BAD_REQUEST)
     

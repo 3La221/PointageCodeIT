@@ -24,7 +24,8 @@ class EmployeSerializer(serializers.ModelSerializer):
         new_representation["username"] = old_representation["username"]
         new_representation["first_name"] = old_representation["first_name"]
         new_representation["last_name"] = old_representation["last_name"]
-        new_representation["company"] = old_representation["company"]
+        
+        new_representation["company"] = instance.company.name
         
         
         return new_representation
