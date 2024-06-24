@@ -106,7 +106,10 @@ class EmployeViewSet(viewsets.ViewSet):
                 tokens = RefreshToken.for_user(user)
                 return Response({
                     "id":user.id,
-                    "access":str(tokens.access_token)
+                    "access":str(tokens.access_token),
+                    "first_name":user.first_name,
+                    "last_name":user.last_name,
+                    "username":user.username,
                 },status=status.HTTP_200_OK)
             else:
                 return Response({"message":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
