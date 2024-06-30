@@ -8,6 +8,6 @@ router = DefaultRouter()
 router.register(r"company",CompanyViewSet,basename="company")
 router.register(r"employe",EmployeViewSet,basename="employe")
 router.register(r"company_admin",CompanyAdminViewSet,basename="company-admin")
-
+router.register(r"superadmin",SuperAdminViewSet,basename="superadmin")
 
 urlpatterns = router.urls

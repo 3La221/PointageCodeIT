@@ -12,7 +12,8 @@ class EmployeSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         first_name = data["first_name"].replace(" ","")
         last_name = data["last_name"].replace(" ", "")
-        data["username"] = f'{first_name.strip()}.{last_name}'
+        phone_number = data["phone_number"]
+        data["username"] = f'{first_name.strip().lower()}.{last_name.lower()}{phone_number[-4:]}'
         
         return super().to_internal_value(data)
     
@@ -26,6 +27,10 @@ class EmployeSerializer(serializers.ModelSerializer):
         new_representation["last_name"] = old_representation["last_name"]
         
         new_representation["company"] = instance.company.name
+        new_representation["email"] = instance.email
+        new_representation["phone_number"] = instance.phone_number
+        new_representation["gender"] = instance.gender
+        new_representation["active"] = instance.active
         
         
         return new_representation

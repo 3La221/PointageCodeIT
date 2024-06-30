@@ -11,6 +11,7 @@ import { Box, Icon, Stack, useTheme } from "@mui/material";
 import { DarkModeOutlined , LightModeOutlined, Person2Outlined } from "@mui/icons-material";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import { logout } from "../helpers/actions";
 
 
 const drawerWidth = 240;
@@ -166,7 +167,7 @@ const TopBar = ({ open, handleDrawerOpen ,setMode}) => {
       >
         <MenuItem onClick={handleClose}>Add Profile</MenuItem>
         <MenuItem onClick={handleClose}>My account</MenuItem>
-        <MenuItem onClick={handleClose}>Logout</MenuItem>
+        <MenuItem onClick={logout}>Logout</MenuItem>
       </Menu>
       
     </AppBar>

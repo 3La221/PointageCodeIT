@@ -25,7 +25,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 
 
-export default function MiniDrawer() {
+export default function App() {
   const [mode, setMode] = React.useState(localStorage.getItem("theme") || 'light');
   const [open, setOpen] = React.useState(false);
 
@@ -49,7 +49,7 @@ export default function MiniDrawer() {
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
         
-        <Outlet/>
+        <Outlet />
        
       </Box>
     </Box>

@@ -9,19 +9,17 @@ import Paper from '@mui/material/Paper';
 import { Outlet, useNavigate } from 'react-router-dom';
 import axiosService from '../../helpers/axios';
 import { getCompanyID } from '../../helpers/actions';
-import { Badge, IconButton, Stack, TextField } from '@mui/material';
+import { TextField } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import EditIcon from '@mui/icons-material/Edit';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import DeleteModal from '../../components/modals/DeleteModal';
-import { Divider } from 'rsuite';
-export default function Employees() {
+
+
+export default function ListEmployes() {
   const [employes, setEmployes] = useState([])  
   const navigate = useNavigate()
 
   const company_id = getCompanyID()
   useEffect(() => {
-    axiosService.get(`company/${company_id}/employes/?active=true`).then((res)=>{
+    axiosService.get(`company/${company_id}/employes/`).then((res)=>{
       setEmployes(res.data)
     }).catch((err)=>{
       console.log(err)
@@ -29,8 +27,6 @@ export default function Employees() {
 
   },[])
   const [searchQuery, setSearchQuery] = useState("")
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [currentEmploye, setCurrentEmploye] = useState(null);
 
   const filteredEmployes = employes.filter((employe)=> 
   employe.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,9 +57,7 @@ export default function Employees() {
           <TableCell>Last Name</TableCell>
           <TableCell>First Name</TableCell>
           <TableCell>Username</TableCell>
-          <TableCell>Phone Number</TableCell>
-          <TableCell>Email</TableCell>
-          <TableCell align='center'></TableCell>
+            
             
           </TableRow> 
         </TableHead>
@@ -72,6 +66,7 @@ export default function Employees() {
             <TableRow
               key={employe.id}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } , cursor: "pointer" , "&:hover":{backgroundColor:"#f5f5f5"}}}
+              onClick={()=>{navigate(`${employe.id}`)}}
             >
               <TableCell component="th" scope="row">
                 {employe.first_name}
@@ -79,25 +74,6 @@ export default function Employees() {
               </TableCell>
               <TableCell>{employe.last_name}</TableCell>
               <TableCell>{employe.username}</TableCell>
-              <TableCell>{employe.phone_number}</TableCell>
-              <TableCell>{employe.email}</TableCell>
-              <TableCell align='right'> 
-
-                <Stack direction={"row"} > 
-                  <IconButton color="inherit">
-                    <EditIcon/>
-                  </IconButton>
-
-                  <IconButton color="inherit" onClick={()=>{setIsDeleteModalOpen(true) ; setCurrentEmploye(employe);}}>
-                    <RemoveCircleIcon/>
-                  </IconButton>
-
-                </Stack>
-              
-                
-
-
-              </TableCell>
               
             </TableRow>
 
@@ -107,9 +83,6 @@ export default function Employees() {
 
       <Outlet />
     </TableContainer>
-    <Divider/>
-    <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye}/>
-
     </>
     
   );

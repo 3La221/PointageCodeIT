@@ -57,9 +57,17 @@ class CompanyViewSet(viewsets.ViewSet):
     
     @action(detail=True,methods=['get'])
     def employes(self,request,pk=None):
+        qury_params = request.query_params
         queryset = Company.objects.all()
         company = get_object_or_404(queryset , pk=pk)
-        company_employes = company.employes.all()
+
+        try:
+            if qury_params.get('active') == 'false':
+                company_employes = company.employes.filter(active=False)
+            elif qury_params.get('active') == 'true':
+                company_employes = company.employes.filter(active=True)
+        except KeyError:
+            company_employes = company.employes.all()
         serializer = EmployeSerializer(company_employes,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
@@ -91,6 +99,14 @@ class EmployeViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    @action(detail=True,methods=["delete"])
+    def deactivate(self,request,pk=None):
+        employe = Employe.objects.get(id=pk)
+        employe.active = False
+        employe.save()
+        return Response({"message":"Employe Deactivated"},status=status.HTTP_200_OK)
     
     @action(detail=False,methods=["post"])
     def login(self,request):
@@ -211,3 +227,40 @@ class CompanyAdminViewSet(viewsets.ViewSet):
         except KeyError:
             return Response({"message":"Please provide username and password"},status=status.HTTP_400_BAD_REQUEST)
     
+    
+class SuperAdminViewSet(viewsets.ViewSet):
+    
+    permission_classes_by_action = {"login":[AllowAny]}
+    
+    def get_permissions(self):
+        try:
+            # Return permission_classes depending on `action`
+            return [permission() for permission in self.permission_classes_by_action.get(self.action, [IsAdminUser])]
+        except KeyError:
+            # Default to AllowAny if not specified otherwise
+            return [IsAdminUser()]
+    
+    @action(detail=False,methods=["post"])
+    def login(self,request):
+        try:
+            username = request.data["username"]
+            password = request.data["password"]
+            
+            user = authenticate(
+            username = username,
+            password = password
+        )
+            if user:
+                if user.is_superuser:
+                    tokens = RefreshToken.for_user(user)
+                    return Response({
+                        "id":user.id,
+                        "access":str(tokens.access_token),
+                        "is_superuser":True
+                    },status=status.HTTP_200_OK)
+                else:
+                    return Response({"message":"User is not a super admin"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"message":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
+        except KeyError:
+            return Response({"message":"Please provide username and password"},status=status.HTTP_400_BAD_REQUEST)
