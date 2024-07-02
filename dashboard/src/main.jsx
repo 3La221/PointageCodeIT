@@ -19,7 +19,7 @@ import PlainLayout from './components/PlainLayout';
 import ListEmployes from './pages/timekeeping/ListEmployes';
 import ProtectedRoute from './components/route/ProtectedRoute';
 import Login from './pages/Login'
-
+import Restore from './pages/restore/Restore';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -73,8 +73,14 @@ const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+      <Route path="/restore" element={
+        <ProtectedRoute>
+          <Restore/>
+        </ProtectedRoute>
+      } />
       <Route path="*" element={<h1>404 Not Found</h1>} />
       <Route path="test" element={<PlainLayout>TEST</PlainLayout>} />
+
     </Route>
     <Route path="login" element={<Login />} />
     </>

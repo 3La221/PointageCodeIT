@@ -19,7 +19,7 @@ import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Avatar, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
+import RestoreIcon from '@mui/icons-material/Restore';
 const drawerWidth = 240;
 
 const openedMixin = (theme) => ({
@@ -106,6 +106,11 @@ const SideBar = ({ open, handleDrawerClose }) => {
       icon: <SettingsOutlinedIcon />,
       path:"/settings"
     },
+    {
+      text:"Restore",
+      icon : <RestoreIcon />,
+      path:"/restore"
+    }
   ];
 
   return (

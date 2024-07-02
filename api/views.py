@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .pagination import CustomPagination
 from django.db.models import Q
-from datetime import datetime
+from datetime import datetime, timedelta
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from .permissions import IsCompanyAdmin
@@ -60,14 +60,14 @@ class CompanyViewSet(viewsets.ViewSet):
         qury_params = request.query_params
         queryset = Company.objects.all()
         company = get_object_or_404(queryset , pk=pk)
-
+        company_employes = company.employes.all()
         try:
             if qury_params.get('active') == 'false':
                 company_employes = company.employes.filter(active=False)
             elif qury_params.get('active') == 'true':
                 company_employes = company.employes.filter(active=True)
-        except :
-            company_employes = company.employes.all()
+        except Exception as e:
+            print(e)
         serializer = EmployeSerializer(company_employes,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
@@ -207,6 +207,7 @@ class EmployeViewSet(viewsets.ViewSet):
                     if pointing.status != "B" :
                         return Response({"message":"You have not started a break."},status=400)
                     
+                    
                     pointing.break_end_time = timezone.now()
                     pointing.code = code
                     pointing.status = "WAB" 
@@ -279,12 +280,20 @@ class EmployeViewSet(viewsets.ViewSet):
                 Q(date__gte=start_date) & Q(date__lt=end_date))    
         else:
             employe_pointings = employe.pointings.all()
-        print("TTTIGIGIIREGERGERG")
         paginator = CustomPagination()
         page = paginator.paginate_queryset(employe_pointings,request)
         
         serializer = PointingSerializer(page,many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+    @action(detail=True,methods=["get"])
+    def history(self,request,pk=None):
+        query_params = request.query_params
+        days = query_params.get("day")
+        employe = get_object_or_404(Employe,id=pk)
+        last_seven_days_pointings = employe.pointings.filter(date__gte=datetime.now()-timedelta(days=int(days)))
+        serializer = PointingSerializer(last_seven_days_pointings,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
     
 
 

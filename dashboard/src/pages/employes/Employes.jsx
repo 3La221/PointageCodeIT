@@ -6,10 +6,10 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import axiosService from '../../helpers/axios';
 import { getCompanyID } from '../../helpers/actions';
-import { Badge, IconButton, Stack, TextField } from '@mui/material';
+import { Alert, Badge, IconButton, Snackbar, Stack, TextField } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
@@ -17,7 +17,6 @@ import DeleteModal from '../../components/modals/DeleteModal';
 import { Divider } from 'rsuite';
 export default function Employees() {
   const [employes, setEmployes] = useState([])  
-  const navigate = useNavigate()
 
   const company_id = getCompanyID()
   useEffect(() => {
@@ -32,13 +31,24 @@ export default function Employees() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [currentEmploye, setCurrentEmploye] = useState(null);
 
+  const [state, setState] = React.useState({
+    isSnackOpen: false,
+    vertical: "top",
+    horizontal: "center",
+  });
+
+  const { vertical, horizontal, isSnackOpen } = state;
+
+
   const filteredEmployes = employes.filter((employe)=> 
   employe.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
   employe.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
   employe.username.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-
+  const handleClose = () => {
+    setState({ ...state, isSnackOpen: false });
+  };
 
 
 
@@ -108,7 +118,21 @@ export default function Employees() {
       <Outlet />
     </TableContainer>
     <Divider/>
-    <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye}/>
+    <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye} setState={setState} />
+
+    <Snackbar
+        anchorOrigin={{ vertical:"top", horizontal:"center" }}
+        open={isSnackOpen}
+        onClose={handleClose}
+        autoHideDuration={3000}
+      
+        key={vertical + horizontal}
+      >
+        <Alert variant="filled" severity="warning">
+          User Deleted !
+        </Alert>
+
+      </Snackbar>
 
     </>
     

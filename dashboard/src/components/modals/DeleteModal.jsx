@@ -1,8 +1,10 @@
+import axiosService from '../../helpers/axios';
 import React from 'react';
 import { Modal, Button, Placeholder } from 'rsuite';
 
-const DeleteModal = ({ open, setOpen, employe }) => {
+const DeleteModal = ({ open, setOpen, employe,setState }) => {
   const handleClose = () => setOpen(false);
+  const handleState = (newState) => setState({ ...newState, isSnackOpen: true });
 
   const modalWrapperStyle = {
     display: 'flex',
@@ -18,6 +20,18 @@ const DeleteModal = ({ open, setOpen, employe }) => {
     height: '100%',
   };
 
+
+
+  const handleSubmit = () =>{
+    axiosService.delete(`employe/${employe.id}/deactivate`).then((res)=>{
+      console.log(res)
+      handleClose()
+      handleState()
+    }).catch((err)=>{
+      console.log(err)
+    })
+  }
+
   return (
     <div style={modalWrapperStyle}>
       <Modal open={open} onClose={handleClose} size="xs" style={{ display: 'flex' , flexDirection : 'column' , justifyContent : 'center' , height:'100%'}}>
@@ -28,7 +42,7 @@ const DeleteModal = ({ open, setOpen, employe }) => {
         Are you sure you want to deactivate {employe && employe.username} account ?
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={handleClose} appearance="primary" color='red'>
+          <Button onClick={handleSubmit} appearance="primary" color='red'>
             YES !
           </Button>
           <Button onClick={handleClose} appearance="subtle">
