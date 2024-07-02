@@ -76,6 +76,10 @@ AUTH_USER_MODEL = "api.Profile"
 
 CORS_ALLOW_ALL_ORIGINS: True
 
+USE_TZ = True
+
+TIME_ZONE = "Africa/Algiers"
+
 
 ROOT_URLCONF = 'codeITPointage.urls'
 

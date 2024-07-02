@@ -66,14 +66,17 @@ class CompanyViewSet(viewsets.ViewSet):
                 company_employes = company.employes.filter(active=False)
             elif qury_params.get('active') == 'true':
                 company_employes = company.employes.filter(active=True)
-        except KeyError:
+        except :
             company_employes = company.employes.all()
         serializer = EmployeSerializer(company_employes,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
 
 class EmployeViewSet(viewsets.ViewSet):
-    permission_classes_by_action = {'check_in': [IsAuthenticated],
+    permission_classes_by_action = {'clock_in': [IsAuthenticated],
+                                    'start_break': [IsAuthenticated],
+                                    'end_break': [IsAuthenticated],
+                                    'clock_out': [IsAuthenticated],
                                     'pointings':[IsCompanyAdmin],
                                     'create':[IsCompanyAdmin],
                                     'list':[IsAdminUser],
@@ -132,21 +135,125 @@ class EmployeViewSet(viewsets.ViewSet):
         except KeyError:
             return Response({"message":"Please provide username and password"},status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=True,methods=["post"])
-    def check_in(self,request,pk=None):
-        employe = Employe.objects.get(id=pk)
+    
+    @action(detail=True,methods=["POST"])
+    def clock_in(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        
         try:
-            wifi = request.data["wifi"]
+            ssid = request.data["ssid"]
+            bssid = request.data["bssid"]
             company = employe.company
-            if wifi in company.wifis:
-                code , _ = Code.objects.get_or_create(name="T")
-                pointing = Pointing.objects.create(employe=employe,code=code)
-                pointing.save()
-                return Response({"message":"Check In Successfull"},status=status.HTTP_200_OK)
-            else:
-                return Response({"message":"Invalid Wifi"},status=status.HTTP_400_BAD_REQUEST)
+            wifis = company.wifis.all()
+            today = timezone.localdate()
+            for w in wifis:
+                if ssid == w.ssid and bssid == w.bssid :
+                    code = Code.objects.get(name="W")
+                    pointing , created = Pointing.objects.get_or_create(employe=employe,date = today)
+                    if created:
+                        pointing.code = code 
+                        pointing.status = "W"
+                        pointing.save()
+                        return Response({"message":"Clock In Successful"},status=status.HTTP_200_OK)
+                    return Response({"message":"You have already clocked in"})
+            return Response({"message": "WiFi not authorized."}, status=400)
         except KeyError:
-            return Response({"message":"Please provide wifi"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "SSID or BSSID not provided."}, status=400)
+        
+    @action(detail=True,methods=["POST"])
+    def start_break(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        
+        try:
+            ssid = request.data["ssid"]
+            bssid = request.data["bssid"]
+            company = employe.company
+            wifis = company.wifis.all()
+            today = timezone.localdate()
+            for w in wifis :
+                if ssid == w.ssid and bssid == w.bssid :
+                    code = Code.objects.get(name="P")
+                    pointing = Pointing.objects.get(employe= employe,date =today )
+                    if pointing.status == "B" :
+                        return Response({"message":"You have already started a break."},status=400)
+                    pointing.status = "B"
+                    pointing.break_start_time = timezone.now()
+                    pointing.code = code 
+                    pointing.save()
+                    return Response({"message":"Break started successfully."},status=200)
+                return Response({"message": "WiFi not authorized."}, status=400)
+        except Pointing.DoesNotExist:
+            return Response({"message": "No clock-in record found for today."}, status=404)
+        except KeyError:
+            return Response({"message": "SSID or BSSID not provided."}, status=400)
+       
+    
+    @action(detail=True,methods=["POST"])
+    def end_break(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        
+        try:
+            ssid = request.data["ssid"]
+            bssid = request.data["bssid"]
+            company = employe.company
+            wifis = company.wifis.all()
+            today = timezone.localdate()
+            for w in wifis :
+                if ssid == w.ssid and bssid == w.bssid :
+                    code = Code.objects.get(name="W")
+                    pointing = Pointing.objects.get(employe= employe,date = today )
+                    if pointing.status == "WAB" :
+                        return Response({"message":"You have already ended your break."},status=400)
+                    if pointing.status != "B" :
+                        return Response({"message":"You have not started a break."},status=400)
+                    
+                    pointing.break_end_time = timezone.now()
+                    pointing.code = code
+                    pointing.status = "WAB" 
+                    pointing.save()
+                    return Response({"message":"Break ended successfully."},status=200)
+                return Response({"message": "WiFi not authorized."}, status=400)
+        except Pointing.DoesNotExist:
+            return Response({"message": "No clock-in record found for today."}, status=404)
+        except KeyError:
+            return Response({"message": "SSID or BSSID not provided."}, status=400)
+        except Exception as e:
+            return Response({"message": f"An error occurred: {str(e)}"}, status=500)
+        
+    @action(detail=True,methods=["POST"])
+    def clock_out(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        
+        try:
+            ssid = request.data["ssid"]
+            bssid = request.data["bssid"]
+            company = employe.company
+            wifis = company.wifis.all()
+            today = timezone.localdate()
+            for w in wifis :
+                if ssid == w.ssid and bssid == w.bssid :
+                    code = Code.objects.get(name="T")
+                    pointing = Pointing.objects.get(employe= employe,date = today )
+                    if pointing.status == "D" :
+                        return Response({"message":"You have already clocked out."},status=400)
+                    if pointing.status == "B" :
+                        return Response({"message":"You have not ended your break."},status=400)
+                    
+                    pointing.clock_out_time = timezone.now()
+                    pointing.status = "D"
+                    pointing.code = code 
+                    pointing.save()
+                    return Response({"message": "Clock-out recorded successfully."})
+                return Response({"message": "WiFi not authorized."}, status=400)
+        except Pointing.DoesNotExist:
+            return Response({"message": "No clock-in record found for today."}, status=404)
+        except KeyError:
+            return Response({"message": "SSID or BSSID not provided."}, status=400)
+        except Exception as e:
+            return Response({"message": f"An error occurred: {str(e)}"}, status=500)
+        
+    
+
         
     @action(detail=True,methods=["get"])
     def pointings(self,request,pk=None):
@@ -172,7 +279,7 @@ class EmployeViewSet(viewsets.ViewSet):
                 Q(date__gte=start_date) & Q(date__lt=end_date))    
         else:
             employe_pointings = employe.pointings.all()
-        
+        print("TTTIGIGIIREGERGERG")
         paginator = CustomPagination()
         page = paginator.paginate_queryset(employe_pointings,request)
         

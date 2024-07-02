@@ -40,11 +40,28 @@ class EmployeSerializer(serializers.ModelSerializer):
         return employe
 
 
+class WifiSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wifi 
+        fields = ["bssid","ssid"]
+
 class CompanySerializer(serializers.ModelSerializer):
     employes = EmployeSerializer(many=True,read_only=True)
+    wifis = WifiSerializer(many=True)
     class Meta:
         model = Company
         fields = "__all__"
+        
+    def create(self, validated_data):
+        wifis = validated_data.pop("wifis")
+        company = Company.objects.create(**validated_data)
+        
+        for wifi in wifis:
+            w = Wifi.objects.create(bssid = wifi["bssid"] , ssid = wifi["ssid"] , company = company)
+        
+        company.save()
+        
+        return company
 
 
 class CompanyAdminSerializer(serializers.ModelSerializer):
