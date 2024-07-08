@@ -1,10 +1,10 @@
+import { Typography } from '@mui/material';
 import axiosService from '../../helpers/axios';
 import React from 'react';
-import { Modal, Button, Placeholder } from 'rsuite';
+import { Modal, Button } from 'rsuite';
 
-const DeleteModal = ({ open, setOpen, employe,setState }) => {
+const DeleteModal = ({ open, setOpen, employe, handleState }) => {
   const handleClose = () => setOpen(false);
-  const handleState = (newState) => setState({ ...newState, isSnackOpen: true });
 
   const modalWrapperStyle = {
     display: 'flex',
@@ -13,40 +13,39 @@ const DeleteModal = ({ open, setOpen, employe,setState }) => {
     height: '100vh',
   };
 
-  const modalStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    height: '100%',
+  const handleSubmit = () => {
+    if (!employe) return; // Vérifier si employe est null ou undefined
+
+    axiosService.delete(`employe/${employe.id}/deactivate`)
+      .then((res) => {
+        console.log(res);
+        handleClose();
+        handleState({ isSnackOpen: true }); // Optionnel : donner un retour à l'utilisateur
+      })
+      .catch((err) => {
+        console.log(err);
+        // Gérer l'erreur, afficher un message d'erreur, etc.
+      });
   };
-
-
-
-  const handleSubmit = () =>{
-    axiosService.delete(`employe/${employe.id}/deactivate`).then((res)=>{
-      console.log(res)
-      handleClose()
-      handleState()
-    }).catch((err)=>{
-      console.log(err)
-    })
-  }
 
   return (
     <div style={modalWrapperStyle}>
-      <Modal open={open} onClose={handleClose} size="xs" style={{ display: 'flex' , flexDirection : 'column' , justifyContent : 'center' , height:'100%'}}>
+      <Modal open={open} onClose={handleClose} size="xs" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
         <Modal.Header>
-          <Modal.Title>Deactivate {employe && employe.last_name} Account</Modal.Title>
+          <Modal.Title>Désactiver le compte de {employe?.last_name}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-        Are you sure you want to deactivate {employe && employe.username} account ?
+          Êtes-vous sûr de vouloir désactiver le compte de {employe?.username} ?
+          <br />
+          <br />
+      
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={handleSubmit} appearance="primary" color='red'>
-            YES !
+            Oui !
           </Button>
           <Button onClick={handleClose} appearance="subtle">
-            Cancel
+            Annuler
           </Button>
         </Modal.Footer>
       </Modal>

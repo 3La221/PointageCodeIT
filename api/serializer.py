@@ -43,7 +43,7 @@ class EmployeSerializer(serializers.ModelSerializer):
 class WifiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wifi 
-        fields = ["bssid","ssid"]
+        fields = "__all__"
 
 class CompanySerializer(serializers.ModelSerializer):
     employes = EmployeSerializer(many=True,read_only=True)
@@ -82,16 +82,11 @@ class CodeSerializer(serializers.ModelSerializer):
 
 
 class PointingSerializer(serializers.ModelSerializer):
+    code = CodeSerializer()
     class Meta:
         model = Pointing
         fields = "__all__"
         
         
-    def to_representation(self, instance):
-        
-        representation =  super().to_representation(instance)
-        code = Code.objects.get(id=representation["code"])
-        representation["code"] = code.name
-        
-        return representation
+    
     

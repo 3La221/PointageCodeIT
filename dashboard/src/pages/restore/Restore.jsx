@@ -7,27 +7,45 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import {  Stack } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import {  Stack , IconButton } from '@mui/material';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Divider } from 'rsuite';
-
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import RestoreIcon from '@mui/icons-material/Restore';
+import SnackBar from '../../components/SnackBar'
 
 const Restore = () => {
-
+    const navigate = useNavigate()
     const company_id = getCompanyID()
     const [employes,setEmployes] = useState([])
-    useEffect(()=>{
-        axiosService.get(`company/${company_id}/employes/?active=false`).then((res)=>{
-            setEmployes(res.data)
-        }).catch((err)=>{
-            console.log(err)
+    const fetchEmployes = () => {
+      axiosService.get(`company/${company_id}/employes/?active=false`)
+        .then((res) => {
+          setEmployes(res.data);
         })
-    },[])
+        .catch((err) => {
+          console.log(err);
+        });
+    };
+  
+    useEffect(() => {
+      fetchEmployes();
+    }, []);
 
     const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] = useState(false)
     const [currentEmploye, setCurrentEmploye] = useState(null)
+    const [isSnackOpen, setIsSnackOpen] = useState(false)
 
+    const handleRestore = (employe) => {
+      axiosService.patch(`employe/${employe.id}/activate/`).then((res)=>{
+        setIsSnackOpen(true)
+        fetchEmployes();
 
+      
+      }).catch((err)=>{
+        console.log(err)
+      })
+    }
 
 
 
@@ -63,7 +81,13 @@ const Restore = () => {
               <TableCell align='right'> 
 
                 <Stack direction={"row"} > 
-                  
+                  <IconButton color="inherit" onClick={()=>{setIsPermanentDeleteModalOpen(true) ; setCurrentEmploye(employe);}}>
+                      <HighlightOffIcon/>
+                  </IconButton>
+
+                  <IconButton color="inherit"  onClick={()=>handleRestore(employe)}>
+                        <RestoreIcon/>
+                  </IconButton>
 
                 </Stack>
               
@@ -81,6 +105,8 @@ const Restore = () => {
       <Outlet />
     </TableContainer>
     <Divider/>
+
+    <SnackBar isSnackOpen={isSnackOpen} handleClose={()=>setIsSnackOpen(false)} message="Employe Restored !" />
 
     </>
   )

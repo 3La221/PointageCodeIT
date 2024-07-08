@@ -76,40 +76,40 @@ const SideBar = ({ open, handleDrawerClose }) => {
 
   const sideBarItems1 = [
     {
-      text: "Dashboard",
+      text: "Tableau de bord",
       icon: <Dashboard />,
-      path:"/"
+      path: "/"
     },
   ];
-
+  
   const sideBarItems2 = [
     {
-      text: "Employes Accounts",
+      text: "Comptes des Employés",
       icon: <GroupOutlinedIcon />,
-      path:"/employes"
+      path: "/employes"
     },
     {
-      text: "TimeKeeping",
+      text: "Calendrier de pointage",
       icon: <PendingActionsOutlinedIcon />,
-      path:"/timekeeping"
+      path: "/timekeeping"
     },
     {
-      text: "Add Employe",
+      text: "Ajouter un employé",
       icon: <PersonAddAltOutlinedIcon />,
-      path:"/addemploye"
+      path: "/addemploye"
     },
   ];
-
+  
   const sideBarItems3 = [
     {
-      text: "Settings",
+      text: "Paramètres",
       icon: <SettingsOutlinedIcon />,
-      path:"/settings"
+      path: "/settings"
     },
     {
-      text:"Restore",
-      icon : <RestoreIcon />,
-      path:"/restore"
+      text: "Restaurer",
+      icon: <RestoreIcon />,
+      path: "/restore"
     }
   ];
 

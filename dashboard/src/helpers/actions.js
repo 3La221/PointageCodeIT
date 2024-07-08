@@ -20,5 +20,6 @@ const getCompanyID = () => {
 }
 
 export const API_URL = "http://127.0.0.1:8000/api"
+export const DOMAIN_URL = "http://127.0.0.1:8000/"
 
 export {getUser, logout , getCompanyID}

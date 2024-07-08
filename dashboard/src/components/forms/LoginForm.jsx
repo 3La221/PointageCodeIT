@@ -21,7 +21,7 @@ const LoginForm = () => {
     const [data, setData] = useState({username: '', password: ''});
     const navigate = useNavigate()
     
-    
+    const [error , setError] = useState('')
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -31,6 +31,7 @@ const LoginForm = () => {
           
         }).catch((err)=>{
           console.log(err)
+          setError('Nom d\'utilisateur ou mot de passe incorrect')
         })
 
     }
@@ -75,10 +76,8 @@ const LoginForm = () => {
         autoComplete="current-password"
         onChange = {(e) => setData({...data, password: e.target.value})}
       />
-      <FormControlLabel
-        control={<Checkbox value="remember" color="primary" />}
-        label="Remember me"
-      />
+      {error && <Typography variant="body2" color="error">{error}</Typography>}
+     
       <Button
         type="submit"
         fullWidth

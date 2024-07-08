@@ -18,11 +18,17 @@ class Status(Enum):
     BREAK = "B"
     WORKING_AFTER_BREAK = "WAB"
     DONE = "D"
+    
+class CodeRole(Enum):
+    DONE = "DONE"
+    WORKING = "WORKING"
+    BREAK = "BREAK"
+    ABSENT = "ABSENT"
+    OTHER = "OTHER"
 
-# Create your models here.
 class Profile(AbstractUser):
     id = models.UUIDField(default=uuid.uuid4,primary_key=True,editable=False)
-    gender = models.CharField(max_length=10, choices=[(tag.name, tag.value) for tag in Gender],null=True , blank = True)
+    gender = models.CharField(max_length=10, choices=[(tag.value, tag.name) for tag in Gender],null=True , blank = True)
     phone_number = models.CharField(max_length=12,null=True,blank=True)
     email = models.EmailField(max_length=80,null=True,blank=True)
     active = models.BooleanField(default=True)
@@ -53,6 +59,9 @@ class Employe(Profile):
 class Code(models.Model):
     name = models.CharField(max_length=6 , null=False , blank=False)
     company = models.ForeignKey("Company",  on_delete=models.CASCADE , related_name="codes" )
+    meaning = models.CharField(max_length=50,null=True,blank=True)
+    role = models.CharField(max_length=20,choices=[(tag.value, tag.name) for tag in CodeRole],null=True,blank=True)
+    color = models.CharField(max_length=20,null=True,blank=True,default="#95a5a6")
     
     
     

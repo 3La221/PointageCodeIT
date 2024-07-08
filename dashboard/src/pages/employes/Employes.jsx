@@ -9,7 +9,7 @@ import Paper from '@mui/material/Paper';
 import { Outlet } from 'react-router-dom';
 import axiosService from '../../helpers/axios';
 import { getCompanyID } from '../../helpers/actions';
-import { Alert, Badge, IconButton, Snackbar, Stack, TextField } from '@mui/material';
+import { Alert, Badge, IconButton, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
@@ -17,19 +17,28 @@ import DeleteModal from '../../components/modals/DeleteModal';
 import { Divider } from 'rsuite';
 export default function Employees() {
   const [employes, setEmployes] = useState([])  
-
   const company_id = getCompanyID()
+
+  const fetchEmployes = () => {
+    axiosService.get(`company/${company_id}/employes/?active=true`)
+      .then((res) => {
+        setEmployes(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  
+
+
+  }
   useEffect(() => {
-    axiosService.get(`company/${company_id}/employes/?active=true`).then((res)=>{
-      setEmployes(res.data)
-    }).catch((err)=>{
-      console.log(err)
-    })
+    fetchEmployes();
 
   },[])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [currentEmploye, setCurrentEmploye] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const [state, setState] = React.useState({
     isSnackOpen: false,
@@ -49,13 +58,24 @@ export default function Employees() {
   const handleClose = () => {
     setState({ ...state, isSnackOpen: false });
   };
+  
+  const handleState = (newState) =>{
+
+    setState({ ...newState, isSnackOpen: true });
+    fetchEmployes();
+
+  } 
 
 
 
   return (
     <>
+
+    <h2 style={{marginBottom:"20px"}}>
+    Liste d'Employés
+    </h2>
   <TextField
-  label="Search Employees"
+  label="Rechercher des employés"
   variant="outlined"
   value={searchQuery}
   onChange={(e)=> setSearchQuery(e.target.value)}
@@ -68,10 +88,10 @@ export default function Employees() {
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-          <TableCell>Last Name</TableCell>
-          <TableCell>First Name</TableCell>
-          <TableCell>Username</TableCell>
-          <TableCell>Phone Number</TableCell>
+          <TableCell>Nom</TableCell>
+          <TableCell>Prénom</TableCell>
+          <TableCell>Nom d'utilisateur</TableCell>
+          <TableCell>Numéro de téléphone</TableCell>
           <TableCell>Email</TableCell>
           <TableCell align='center'></TableCell>
             
@@ -118,7 +138,7 @@ export default function Employees() {
       <Outlet />
     </TableContainer>
     <Divider/>
-    <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye} setState={setState} />
+    <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye} handleState={handleState} />
 
     <Snackbar
         anchorOrigin={{ vertical:"top", horizontal:"center" }}
@@ -128,8 +148,8 @@ export default function Employees() {
       
         key={vertical + horizontal}
       >
-        <Alert variant="filled" severity="warning">
-          User Deleted !
+        <Alert variant="filled" severity="error">
+        Utilisateur supprimé !
         </Alert>
 
       </Snackbar>

@@ -14,12 +14,21 @@ from datetime import datetime, timedelta
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from .permissions import IsCompanyAdmin
-    
+import openpyxl
+from .utils import extract_time,increment_column
+import os
+from django.conf import settings
+
 
 
 
 class CompanyViewSet(viewsets.ViewSet):
-    permission_classes_by_action = {"employes":[IsCompanyAdmin] }
+    permission_classes_by_action = {"employes":[IsCompanyAdmin],
+                                    "codes":[IsCompanyAdmin],
+                                    "wifis":[IsCompanyAdmin],
+                                    "daily_attendance":[IsCompanyAdmin],
+                                    'today_in_csv':[IsCompanyAdmin],
+                                    'today_pointings':[IsCompanyAdmin]}
     
     def get_permissions(self):
         try:
@@ -71,6 +80,73 @@ class CompanyViewSet(viewsets.ViewSet):
         serializer = EmployeSerializer(company_employes,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
+    
+    @action(detail=True,methods=["get"])
+    def codes (self,request,pk=None):
+        queryset = Company.objects.all()
+        company = get_object_or_404(queryset,pk=pk)
+        codes = company.codes.all()
+        serializer = CodeSerializer(codes,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=["get"])
+    def wifis(self,request,pk=None):
+        queryset = Company.objects.all()
+        company = get_object_or_404(queryset,pk=pk)
+        wifis = company.wifis.all()
+        serializer = WifiSerializer(wifis,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    
+    @action(detail=True,methods=["get"])
+    def daily_attendance(self,request,pk=None):
+        pointings = Pointing.objects.filter(date=timezone.localdate(),employe__company_id=pk)
+        serializer = PointingSerializer(pointings,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)        
+    
+    @action(detail=True, methods=["get"])
+    def today_in_csv(self, request, pk=None):
+        pointings = Pointing.objects.filter(date=timezone.localdate(), employe__company_id=pk)
+        wb = openpyxl.load_workbook("./excel/POINTAGE.xlsx")
+        sheet = wb.active
+        i = 5
+        for pointing in pointings:
+            sheet[f'B{i}'] = f'{pointing.employe.first_name} {pointing.employe.last_name}'
+            clock_in = extract_time(pointing.clock_in_time.isoformat())
+            sheet[f'C{i}'] = clock_in
+            break_in = extract_time(pointing.break_start_time.isoformat()) if pointing.break_start_time else ''
+            sheet[f'D{i}'] = break_in
+            break_out = extract_time(pointing.break_end_time.isoformat()) if pointing.break_end_time else ''
+            sheet[f'E{i}'] = break_out
+            clock_out = extract_time(pointing.clock_out_time.isoformat()) if pointing.clock_out_time else ''
+            sheet[f'F{i}'] = clock_out
+            i += 1
+
+        # Construct the filename and path
+        filename = f'{timezone.localdate()}.xlsx'
+        file_path = os.path.join(settings.MEDIA_ROOT, 'excel', filename)
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        # Save the file
+        wb.save(file_path)
+        
+        # Construct the file URL
+        file_url = os.path.join(settings.MEDIA_URL, 'excel', filename)
+        
+        return JsonResponse({"file_url": file_url}, status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=["get"])
+    def today_pointings(self,request,pk=None):
+        company = get_object_or_404(Company,id=pk)
+        today = timezone.localdate()
+        pointings = Pointing.objects.filter(date=today,employe__company=company)
+        serializer = PointingSerializer(pointings,many=True)
+        
+        return Response(serializer.data,status=status.HTTP_200_OK)
+            
+        
 
 class EmployeViewSet(viewsets.ViewSet):
     permission_classes_by_action = {'clock_in': [IsAuthenticated],
@@ -80,6 +156,9 @@ class EmployeViewSet(viewsets.ViewSet):
                                     'pointings':[IsCompanyAdmin],
                                     'create':[IsCompanyAdmin],
                                     'list':[IsAdminUser],
+                                    'activate':[IsCompanyAdmin],
+                                    'deactivate':[IsCompanyAdmin],
+                                    'one_month_pointings_to_csv':[IsCompanyAdmin],
                                     }
     
     def get_permissions(self):
@@ -104,12 +183,38 @@ class EmployeViewSet(viewsets.ViewSet):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
     
+    def retrieve(self,request,pk=None):
+        queryset = Employe.objects.all()
+        employe = get_object_or_404(queryset,pk=pk)
+        serializer = EmployeSerializer(employe)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=["patch"])
+    def activate(self,request,pk=None):
+        employe = Employe.objects.get(id=pk)
+        employe.active = True
+        employe.save()
+        return Response({"message":"Employe Activated"},status=status.HTTP_200_OK)
+    
     @action(detail=True,methods=["delete"])
     def deactivate(self,request,pk=None):
         employe = Employe.objects.get(id=pk)
         employe.active = False
         employe.save()
         return Response({"message":"Employe Deactivated"},status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=["POST"])
+    def change_code(self,request,pk=None):
+        date = request.data["date"]
+        code_id = request.data["code_id"]
+        employe = Employe.objects.get(id=pk)
+        pointing , created = Pointing.objects.get_or_create(employe=employe,date = date)
+        code = Code.objects.get(id=code_id)
+        pointing.code = code 
+        pointing.save()
+        
+        return Response({"message":"DONE"},status=200)
+    
     
     @action(detail=False,methods=["post"])
     def login(self,request):
@@ -181,7 +286,7 @@ class EmployeViewSet(viewsets.ViewSet):
                     pointing.code = code 
                     pointing.save()
                     return Response({"message":"Break started successfully."},status=200)
-                return Response({"message": "WiFi not authorized."}, status=400)
+            return Response({"message": "WiFi not authorized."}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
@@ -213,7 +318,7 @@ class EmployeViewSet(viewsets.ViewSet):
                     pointing.status = "WAB" 
                     pointing.save()
                     return Response({"message":"Break ended successfully."},status=200)
-                return Response({"message": "WiFi not authorized."}, status=400)
+            return Response({"message": "WiFi not authorized."}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
@@ -245,7 +350,7 @@ class EmployeViewSet(viewsets.ViewSet):
                     pointing.code = code 
                     pointing.save()
                     return Response({"message": "Clock-out recorded successfully."})
-                return Response({"message": "WiFi not authorized."}, status=400)
+            return Response({"message": "WiFi not authorized."}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
@@ -254,7 +359,46 @@ class EmployeViewSet(viewsets.ViewSet):
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)
         
     
+    @action(detail=True,methods=["POST"])
+    def one_month_pointings_to_csv(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        first_date = request.data["first_date"]
+        last_date = request.data["last_date"]
+        pointings = employe.pointings.filter(date__gte=first_date,date__lte=last_date)
+        wb = openpyxl.load_workbook("./excel/template_mois.xlsx")
+        sheet = wb.active
+        sheet["S4"] = first_date
+        sheet["W4"] = last_date
+        cell = 'B'
+    
+        for p in pointings:
+            sheet["A7"] = f'{p.employe.company.name}'
+            sheet["H11"] = f'{p.employe.first_name}'
+            sheet["R11"] = f'{p.employe.last_name}'
+            
+            sheet[f'{cell}17'] = f'{p.date.day}'
+            sheet[f'{cell}18'] = f'{p.code}'
+            cell = increment_column(cell)
+        filename = f'{employe.first_name}_{first_date}_{last_date}.xlsx'
+        file_path = os.path.join(settings.MEDIA_ROOT, 'excel', filename)
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
+        # Save the file
+        wb.save(file_path)
+        
+        file_url = os.path.join(settings.MEDIA_URL, 'excel', filename)
+        
+        return Response({"message": "File created" , "file_url":file_url}, status=status.HTTP_200_OK)
+            
+    @action(detail=True,methods=["get"])
+    def today_pointings(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        today = timezone.localdate()
+        pointings = employe.pointings.filter(date=today)
+        serializer = PointingSerializer(pointings,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
         
     @action(detail=True,methods=["get"])
     def pointings(self,request,pk=None):
@@ -294,6 +438,15 @@ class EmployeViewSet(viewsets.ViewSet):
         last_seven_days_pointings = employe.pointings.filter(date__gte=datetime.now()-timedelta(days=int(days)))
         serializer = PointingSerializer(last_seven_days_pointings,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=["get"])
+    def export_attendance_to_csv(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        pointings = employe.pointings.all()
+        serializer = PointingSerializer(pointings,many=True)
+        response = Response(serializer.data,status=status.HTTP_200_OK)
+        response['Content-Disposition'] = 'attachment; filename="employe_attendance.csv"'
+        return response
     
 
 
@@ -380,3 +533,86 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 return Response({"message":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
         except KeyError:
             return Response({"message":"Please provide username and password"},status=status.HTTP_400_BAD_REQUEST)
+        
+
+class CodeViewSet(viewsets.ViewSet):
+    
+    permission_classes_by_action = {"create":[IsCompanyAdmin] , "partial_update":[IsCompanyAdmin]}
+    
+    def get_permissions(self):
+        try:
+            # Return permission_classes depending on `action`
+            return [permission() for permission in self.permission_classes_by_action.get(self.action, [IsAdminUser])]
+        except KeyError:
+            # Default to AllowAny if not specified otherwise
+            return [IsAdminUser()]
+    
+    def list(self,request):
+        queryset = Code.objects.all()
+        serializer = CodeSerializer(queryset,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def create(self,request):
+        serializer = CodeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def partial_update(self,request,pk=None):
+        queryset = Code.objects.all()
+        code = get_object_or_404(queryset,pk=pk)
+        serializer = CodeSerializer(code,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self,request,pk=None):
+        queryset = Code.objects.all()
+        code = get_object_or_404(queryset,pk=pk)
+        code.delete()
+        return Response({"message":"Code Deleted"},status=status.HTTP_204_NO_CONTENT)
+    
+
+class WifiViewSet(viewsets.ViewSet):
+        
+        permission_classes_by_action = {"create":[IsCompanyAdmin] , "partial_update":[IsCompanyAdmin]}
+        
+        def get_permissions(self):
+            try:
+                # Return permission_classes depending on `action`
+                return [permission() for permission in self.permission_classes_by_action.get(self.action, [IsAdminUser])]
+            except KeyError:
+                # Default to AllowAny if not specified otherwise
+                return [IsAdminUser()]
+        
+        def list(self,request):
+            queryset = Wifi.objects.all()
+            serializer = WifiSerializer(queryset,many=True)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        
+        def create(self,request):
+            serializer = WifiSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
+        def partial_update(self,request,pk=None):
+            queryset = Wifi.objects.all()
+            wifi = get_object_or_404(queryset,pk=pk)
+            serializer = WifiSerializer(wifi,data=request.data,partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=status.HTTP_200_OK)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
+        def destroy(self,request,pk=None):
+            queryset = Wifi.objects.all()
+            wifi = get_object_or_404(queryset,pk=pk)
+            wifi.delete()
+            return Response({"message":"Wifi Deleted"},status=status.HTTP_204_NO_CONTENT)
+        
+
+    
