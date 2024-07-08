@@ -90,6 +90,7 @@ class Company(models.Model):
     email = models.CharField(max_length=80,null=True,blank=True)
     latitude  = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
+    logo = models.ImageField(upload_to="company_logo",null=True,blank=True)
     
     def __str__(self) -> str:
         return f'{self.name} Company'

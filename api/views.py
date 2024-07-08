@@ -487,7 +487,10 @@ class CompanyAdminViewSet(viewsets.ViewSet):
                         "id":user.id,
                         "access":str(tokens.access_token),
                         "is_companyAdmin":True,
-                        "company_id":user.company_admin.company.id
+                        "company_id":user.company_admin.company.id,
+                        'logo':user.company_admin.company.logo.url,
+                        'company_name':user.company_admin.company.name
+                        
                     },status=status.HTTP_200_OK)
                 else:
                     return Response({"message":"User is not a company admin"},status=status.HTTP_400_BAD_REQUEST)

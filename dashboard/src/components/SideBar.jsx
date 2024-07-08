@@ -20,6 +20,7 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Avatar, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import RestoreIcon from '@mui/icons-material/Restore';
+import { DOMAIN_URL, getCompanyLogo, getCompanyName } from "../helpers/actions";
 const drawerWidth = 240;
 
 const openedMixin = (theme) => ({
@@ -113,6 +114,8 @@ const SideBar = ({ open, handleDrawerClose }) => {
     }
   ];
 
+  const logo = getCompanyLogo();
+  const company_name = getCompanyName() ;
   return (
     <Drawer variant="permanent" open={open}>
       <DrawerHeader>
@@ -135,14 +138,14 @@ const SideBar = ({ open, handleDrawerClose }) => {
           transition: "0.25s",
         }}
         alt="Remy Sharp"
-        src="https://media.licdn.com/dms/image/D4D03AQFPEb4pjPEOJw/profile-displayphoto-shrink_800_800/0/1718702057997?e=1724284800&v=beta&t=qc637BgoIucJyPbKWoIhlmKJc3JsGu7aFJt_dU0eX2c"
+        src = {DOMAIN_URL + logo}
       />
       <Typography
         align="center"
         variant="body1"
         sx={{ fontSize: 17, display: !open && "none", transition: "0.5s" }}
       >
-        Alaa Salah{" "}
+        {company_name}{" "}
       </Typography>
       <Typography
         align="center"

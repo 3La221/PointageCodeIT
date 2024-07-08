@@ -61,6 +61,18 @@ export default function ListEmployes() {
 
   return (
     <>
+     <style>
+          {`
+            @keyframes flash {
+              0% { opacity: 1; }
+              50% { opacity: 0; }
+              100% { opacity: 1; }
+            }
+
+           
+              
+          `}
+        </style>
     <h2 style={{marginBottom:"5px"}}>
     Calendrier de pointage
     </h2>
@@ -98,7 +110,7 @@ export default function ListEmployes() {
                   <TableCell component="th" scope="row">{employe.first_name}</TableCell>
                   <TableCell>{employe.last_name}</TableCell>
                   <TableCell>{employe.username}</TableCell>
-                  <TableCell align='center' >
+                  <TableCell align='left' >
                     {pointing ? (
                       <Badge 
                         badgeContent={pointing.code.name}
@@ -106,7 +118,8 @@ export default function ListEmployes() {
                           '& .MuiBadge-badge': {
                             backgroundColor: pointing.code.color,
                             color: 'white',
-                            animation: "flash 1s infinite" 
+                            animation: pointing.code === "W" ? "flash 1s infinite" : "none", 
+                            marginLeft: "5px"
                           }
                         }}
                       />
