@@ -4,8 +4,9 @@ import { Calendar, Badge } from 'rsuite';
 import axiosService from '../../helpers/axios';
 import AttendanceEditModal from '../../components/modals/AttendanceEditModal';
 import { getCompanyID } from '../../helpers/actions';
-import { Button } from '@mui/material';
+import { Button, Switch } from '@mui/material';
 import { set } from 'react-hook-form';
+import { Edit } from '@mui/icons-material';
 
 const Timekeeping = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -16,6 +17,7 @@ const Timekeeping = () => {
   const [codes,setCodes] = useState([])
   const [formattedDate, setFormattedDate] = useState('')
   const company_id = getCompanyID()
+  const [editMode,setEditMode] = useState(false)
 
 
   const fetchAttendance = async (year, month) => {
@@ -88,7 +90,7 @@ const Timekeeping = () => {
           ) : null}
 
         </div>
-        <Button onClick={() => {setIsEditModalOpen(true); setFormattedDate(formattedDate)}}>Edit</Button>
+        {editMode && <Button onClick={() => {setIsEditModalOpen(true); setFormattedDate(formattedDate)}}> Modifier </Button>}
       </div>
     );
   };
@@ -100,6 +102,13 @@ const Timekeeping = () => {
 
   return (
     <>
+    <Switch
+  checked={editMode}
+  onChange={()=>{setEditMode(!editMode)}}
+  inputProps={{ 'aria-label': 'controlled' }}
+  
+/>
+<label>{!editMode ? 'Activer' : 'Desactiver'} Modification</label>
     <Calendar
       bordered
       renderCell={renderCell}
