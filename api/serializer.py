@@ -81,11 +81,18 @@ class CodeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+
+class BreakSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Break
+        fields = ["start_time","end_time","duration"]
+
 class PointingSerializer(serializers.ModelSerializer):
     code = CodeSerializer()
+    breaks = BreakSerializer(many=True)
     class Meta:
         model = Pointing
-        fields = "__all__"
+        fields = ["id","employe","date","clock_in_time","clock_out_time","code","status","breaks_duration","breaks"]
         
         
     

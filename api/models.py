@@ -5,7 +5,7 @@ from django.contrib.auth.models import  UserManager
 from enum import Enum 
 import datetime
 from django.utils import timezone 
-
+from .utils import haversine
 
 
 class Gender(Enum):
@@ -49,6 +49,7 @@ class Company_Admin(Profile):
 
 class Employe(Profile):
     company = models.ForeignKey("Company",on_delete=models.CASCADE,related_name="employes")
+    current_station = models.ForeignKey("Station",on_delete=models.SET_NULL,related_name="employes",null=True)
     def __str__(self) -> str:
         return f'{self.username} Employe'
     
@@ -73,29 +74,51 @@ class Pointing(models.Model):
     employe = models.ForeignKey(Employe,on_delete=models.CASCADE,related_name="pointings")
     date = models.DateField(default=datetime.date.today)
     clock_in_time  = models.DateTimeField(default=timezone.now, null=False, blank=False)
-    break_start_time  = models.DateTimeField(null=True,blank=True)
-    break_end_time  = models.DateTimeField(null=True,blank=True)
     clock_out_time  = models.DateTimeField(null=True,blank=True)
     code = models.ForeignKey(Code,on_delete=models.CASCADE,related_name="pointings",null=True)
     status = models.CharField(max_length=20,choices=[(tag.value, tag.name) for tag in Status],null=True,blank=True)
     
+    @property
+    def breaks_duration(self):
+        return sum([b.duration for b in self.breaks.all()],datetime.timedelta())
     
     def __str__(self) -> str:
         return f'{self.employe.username} {self.date} {self.code} '
+    
+class Break(models.Model):
+    start_time = models.DateTimeField(null=False,blank=False)
+    end_time = models.DateTimeField(null=True,blank=True)
+    pointing = models.ForeignKey(Pointing,on_delete=models.CASCADE,related_name="breaks")
+    @property
+    def duration(self):
+        if self.end_time is None:
+            return datetime.timedelta(0)
+        return (self.end_time - self.start_time)/60/60
+    
+    
 
 class Company(models.Model):
     id = models.UUIDField(default=uuid.uuid4,primary_key=True,editable=False)
     name = models.CharField(max_length=80,null=True , blank=True)
     phone_number = models.CharField(max_length=12,null=True,blank=True)
     email = models.CharField(max_length=80,null=True,blank=True)
-    latitude  = models.FloatField(default=0)
-    longitude = models.FloatField(default=0)
     logo = models.ImageField(upload_to="company_logo",null=True,blank=True)
     
     def __str__(self) -> str:
         return f'{self.name} Company'
 
-
+class Station(models.Model):
+    company = models.ForeignKey(Company,on_delete=models.CASCADE,related_name="stations")
+    name = models.CharField(max_length=50,blank=False,null=False)
+    latitude = models.FloatField(default=0)
+    longitude = models.FloatField(default=0)
+    
+    def is_employee_nearby(self, latitude, longitude, radius_km=0.3): 
+        distance = haversine(self.latitude, self.longitude, latitude, longitude)
+        return distance <= radius_km
+    
+    def __str__(self) -> str:
+        return f'{self.company} Station {self.name}'
 
 class Wifi(models.Model):
     ssid = models.CharField(max_length=50,blank=False,null=False)

@@ -15,7 +15,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from .permissions import IsCompanyAdmin
 import openpyxl
-from .utils import extract_time,increment_column
+from .utils import extract_time,increment_column,is_employe_in_job
 import os
 from django.conf import settings
 
@@ -248,19 +248,19 @@ class EmployeViewSet(viewsets.ViewSet):
         try:
             ssid = request.data["ssid"]
             bssid = request.data["bssid"]
-            company = employe.company
-            wifis = company.wifis.all()
+            longitude = request.data["longitude"]
+            latitude = request.data["latitude"]
+            in_job = is_employe_in_job(employe,longitude,latitude,ssid,bssid)
             today = timezone.localdate()
-            for w in wifis:
-                if ssid == w.ssid and bssid == w.bssid :
-                    code = Code.objects.get(name="W")
-                    pointing , created = Pointing.objects.get_or_create(employe=employe,date = today)
-                    if created:
-                        pointing.code = code 
-                        pointing.status = "W"
-                        pointing.save()
-                        return Response({"message":"Clock In Successful"},status=status.HTTP_200_OK)
-                    return Response({"message":"You have already clocked in"})
+            if in_job:
+                code = Code.objects.get(name="W")
+                pointing , created = Pointing.objects.get_or_create(employe=employe,date = today)
+                if created:
+                    pointing.code = code 
+                    pointing.status = "W"
+                    pointing.save()
+                    return Response({"message":"Clock In Successful"},status=status.HTTP_200_OK)
+                return Response({"message":"You have already clocked in"})
             return Response({"message": "WiFi not authorized."}, status=400)
         except KeyError:
             return Response({"message": "SSID or BSSID not provided."}, status=400)
@@ -272,21 +272,23 @@ class EmployeViewSet(viewsets.ViewSet):
         try:
             ssid = request.data["ssid"]
             bssid = request.data["bssid"]
-            company = employe.company
-            wifis = company.wifis.all()
+            longitude = request.data["longitude"]
+            latitude = request.data["latitude"]
+            in_job = is_employe_in_job(employe,longitude,latitude,ssid,bssid)
             today = timezone.localdate()
-            for w in wifis :
-                if ssid == w.ssid and bssid == w.bssid :
-                    code = Code.objects.get(name="P")
-                    pointing = Pointing.objects.get(employe= employe,date =today )
-                    if pointing.status == "B" :
-                        return Response({"message":"You have already started a break."},status=400)
-                    pointing.status = "B"
-                    pointing.break_start_time = timezone.now()
-                    pointing.code = code 
-                    pointing.save()
-                    return Response({"message":"Break started successfully."},status=200)
-            return Response({"message": "WiFi not authorized."}, status=400)
+            if in_job:
+                code = Code.objects.get(name="P")
+                pointing = Pointing.objects.get(employe= employe,date =today )
+                if pointing.status == "B" :
+                    return Response({"message":"You have already started a break."},status=400)
+                break_instance = Break.objects.create(start_time=timezone.now(),pointing=pointing)
+                break_instance.save()
+                pointing.status = "B"
+                pointing.code = code 
+                pointing.save()
+                serializer = PointingSerializer(pointing)
+                return Response(serializer.data,status=200)
+            return Response({"message": "WiFi not authorized. + You're not in location"}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
@@ -300,24 +302,26 @@ class EmployeViewSet(viewsets.ViewSet):
         try:
             ssid = request.data["ssid"]
             bssid = request.data["bssid"]
-            company = employe.company
-            wifis = company.wifis.all()
+            longitude = request.data["longitude"]
+            latitude = request.data["latitude"]
+            in_job = is_employe_in_job(employe,longitude,latitude,ssid,bssid)
             today = timezone.localdate()
-            for w in wifis :
-                if ssid == w.ssid and bssid == w.bssid :
-                    code = Code.objects.get(name="W")
-                    pointing = Pointing.objects.get(employe= employe,date = today )
-                    if pointing.status == "WAB" :
-                        return Response({"message":"You have already ended your break."},status=400)
-                    if pointing.status != "B" :
-                        return Response({"message":"You have not started a break."},status=400)
+            if in_job:
+                code = Code.objects.get(name="W")
+                pointing = Pointing.objects.get(employe= employe,date = today )
+                if pointing.status == "WAB" :
+                    return Response({"message":"You have already ended your break."},status=400)
+                if pointing.status != "B" :
+                    return Response({"message":"You have not started a break."},status=400)
                     
-                    
-                    pointing.break_end_time = timezone.now()
-                    pointing.code = code
-                    pointing.status = "WAB" 
-                    pointing.save()
-                    return Response({"message":"Break ended successfully."},status=200)
+                break_instance = Break.objects.get(pointing=pointing,end_time=None)
+                break_instance.end_time = timezone.now()
+                break_instance.save()
+                pointing.code = code
+                pointing.status = "WAB" 
+                pointing.save()
+                serializer = PointingSerializer(pointing)
+                return Response(serializer.data,status=200)
             return Response({"message": "WiFi not authorized."}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
@@ -333,23 +337,24 @@ class EmployeViewSet(viewsets.ViewSet):
         try:
             ssid = request.data["ssid"]
             bssid = request.data["bssid"]
-            company = employe.company
-            wifis = company.wifis.all()
+            longitude = request.data["longitude"]
+            latitude = request.data["latitude"]
+            in_job = is_employe_in_job(employe,longitude,latitude,ssid,bssid)
             today = timezone.localdate()
-            for w in wifis :
-                if ssid == w.ssid and bssid == w.bssid :
-                    code = Code.objects.get(name="T")
-                    pointing = Pointing.objects.get(employe= employe,date = today )
-                    if pointing.status == "D" :
-                        return Response({"message":"You have already clocked out."},status=400)
-                    if pointing.status == "B" :
-                        return Response({"message":"You have not ended your break."},status=400)
+            if in_job:
+                code = Code.objects.get(name="T")
+                pointing = Pointing.objects.get(employe= employe,date = today )
+                if pointing.status == "D" :
+                    return Response({"message":"You have already clocked out."},status=400)
+                if pointing.status == "B" :
+                    return Response({"message":"You have not ended your break."},status=400)
                     
-                    pointing.clock_out_time = timezone.now()
-                    pointing.status = "D"
-                    pointing.code = code 
-                    pointing.save()
-                    return Response({"message": "Clock-out recorded successfully."})
+                pointing.clock_out_time = timezone.now()
+                pointing.status = "D"
+                pointing.code = code 
+                pointing.save()
+                serializer = PointingSerializer(pointing)
+                return Response(serializer.data,status=200)
             return Response({"message": "WiFi not authorized."}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
@@ -489,7 +494,9 @@ class CompanyAdminViewSet(viewsets.ViewSet):
                         "is_companyAdmin":True,
                         "company_id":user.company_admin.company.id,
                         'logo':user.company_admin.company.logo.url,
-                        'company_name':user.company_admin.company.name
+                        'company_name':user.company_admin.company.name,
+                        'first_name':user.first_name,
+                        'last_name':user.last_name 
                         
                     },status=status.HTTP_200_OK)
                 else:
