@@ -113,12 +113,12 @@ class Station(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     
-    def is_employee_nearby(self, latitude, longitude, radius_km=0.3): 
+    def is_employee_nearby(self, latitude, longitude, radius_km=0.5): 
         distance = haversine(self.latitude, self.longitude, latitude, longitude)
         return distance <= radius_km
     
     def __str__(self) -> str:
-        return f'{self.company} Station {self.name}'
+        return f'{self.company} Station {self.name}'                   
 
 class Wifi(models.Model):
     ssid = models.CharField(max_length=50,blank=False,null=False)
