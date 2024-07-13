@@ -234,6 +234,9 @@ class EmployeViewSet(viewsets.ViewSet):
                     "first_name":user.first_name,
                     "last_name":user.last_name,
                     "username":user.username,
+                    "company":user.company.name,
+                    "email":user.email,
+                    "phone_number":user.phone_number,
                 },status=status.HTTP_200_OK)
             else:
                 return Response({"message":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
@@ -261,9 +264,9 @@ class EmployeViewSet(viewsets.ViewSet):
                     pointing.save()
                     return Response({"message":"Clock In Successful"},status=status.HTTP_200_OK)
                 return Response({"message":"You have already clocked in"})
-            return Response({"message": "WiFi not authorized."}, status=400)
+            return Response({"message": "WiFi not authorized. + You're not in location"}, status=400)
         except KeyError:
-            return Response({"message": "SSID or BSSID not provided."}, status=400)
+            return Response({"message": "SSID,BSSID,longitude,latitude not provided."}, status=400)
         
     @action(detail=True,methods=["POST"])
     def start_break(self,request,pk=None):
@@ -292,7 +295,7 @@ class EmployeViewSet(viewsets.ViewSet):
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
-            return Response({"message": "SSID or BSSID not provided."}, status=400)
+            return Response({"message": "SSID,BSSID,longitude,latitude not provided."}, status=400)
        
     
     @action(detail=True,methods=["POST"])
@@ -322,11 +325,11 @@ class EmployeViewSet(viewsets.ViewSet):
                 pointing.save()
                 serializer = PointingSerializer(pointing)
                 return Response(serializer.data,status=200)
-            return Response({"message": "WiFi not authorized."}, status=400)
+            return Response({"message": "WiFi not authorized. + You're not in location"}, status=400)
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
-            return Response({"message": "SSID or BSSID not provided."}, status=400)
+            return Response({"message": "SSID,BSSID,longitude,latitude not provided."}, status=400)
         except Exception as e:
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)
         
@@ -359,7 +362,7 @@ class EmployeViewSet(viewsets.ViewSet):
         except Pointing.DoesNotExist:
             return Response({"message": "No clock-in record found for today."}, status=404)
         except KeyError:
-            return Response({"message": "SSID or BSSID not provided."}, status=400)
+            return Response({"message": "SSID,BSSID,longitude,latitude not provided."}, status=400)
         except Exception as e:
             return Response({"message": f"An error occurred: {str(e)}"}, status=500)
         
