@@ -7,19 +7,27 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axiosService from '../../helpers/axios';
 import { getCompanyID } from '../../helpers/actions';
-import { Button, Divider, Stack, Typography } from '@mui/material';
+import { Alert, Button, Divider, Snackbar, Stack, Typography } from '@mui/material';
 import { Wifi } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CodeEditModal from '../../components/modals/CodeEditModal';
 import CodeAddModal from '../../components/modals/CodeAddModal';
 import WifiAddModal from '../../components/modals/WifiAddModal';
+import StationModal from '../../components/modals/StationModal';
+import WifiEditModal from '../../components/modals/WifiEditModal';
+import WifiDeleteModal from '../../components/modals/WifiDeleteModal';
+import StationEditModal from '../../components/modals/StationEditModal';
+
 
 
 
 const Settings = () => {
   const [codes ,setCodes ] = useState([])
   const [wifis ,setWifis ] = useState([])
+  const [stations , setStations] = useState([])
   const company_id = getCompanyID()
+
   const fetchCodes = () => {
     axiosService.get(`company/${company_id}/codes/`)
       .then((res) => {
@@ -40,11 +48,45 @@ const Settings = () => {
       });
   
   }
+  const fetchstations = () =>{
+    axiosService.get(`company/${company_id}/stations/`)
+      .then((res) => {
+        setStations(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  
+  }
 
   useEffect ( () => {
     fetchCodes()
     fetchwifis()
+    fetchstations()
+    
   },[])
+  const [state, setState] = React.useState({
+    isSnackOpen: false,
+    vertical: "top",
+    horizontal: "center",
+    element: ''
+  });
+
+  const { vertical, horizontal, isSnackOpen , element} = state;
+
+  const handleSnackClose = () => {
+    setState({ ...state, isSnackOpen: false });
+  };
+  
+  const handleDeleteElement = (newState) =>{
+
+    setState({ ...newState, isSnackOpen: true });
+    fetchwifis();
+
+  } 
+
+
+
 
   const [doneCode, setDoneCode] = useState({name: 'N/A', meaning: 'No meaning available', color: 'transparent'})
   const [workingCode, setWorkingCode] = useState({name: 'N/A', meaning: 'No meaning available', color: 'transparent'})
@@ -52,10 +94,18 @@ const Settings = () => {
   const [absentCode, setAbsentCode] = useState({name: 'N/A', meaning: 'No meaning available', color: 'transparent'})
   const [otherCodes, setOtherCodes] = useState([])
   const [codeToEdit, setCodeToEdit] = useState({name: 'N/A', meaning: 'No meaning available', color: 'transparent'}) 
+  const [wifiToEdit , setWifiToEdit] = useState({ssid: 'N/A', bssid: 'No BSSID available'})
+  const [stationToEdit , setStationToEdit] = useState({name:"N/A" , longitude:0.0 , latitude:0.0})
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAddCodeModalOpen, setIsAddCodeModalOpen] = useState(false)
   const [isAddWifiModalOpen, setIsAddWifiModalOpen] = useState(false)
+  const [isEditWifiModalOpen, setIsEditWifiModalOpen] = useState(false)
+  const [isDeleteWifiModalOpen, setIsDeleteWifiModalOpen] = useState(false)
+  const [isAddStationModalOpen, setIsAddStationModalOpen] = useState(false)
+  const [isEditStationModalOpen, setIsEditStationModalOpen] = useState(false)
+
+
 
 
   useEffect(()=>{
@@ -74,7 +124,7 @@ const Settings = () => {
   }
 
 
-
+  const [showMoreCode, setShowMoreCode] = useState(false)
 
  
   return (
@@ -85,7 +135,9 @@ const Settings = () => {
            </Stack>
         <Divider sx={{margin:"20px"}}/>
         <Typography variant='h5' style={{marginLeft: '40px'}}>Les Codes Principaux </Typography>
-            <List dense={false} style={{marginLeft:'50px'}}>
+             {
+              <>
+             <List dense={false} style={{marginLeft:'50px'}}>
         {doneCode && <ListItem
           secondaryAction={
             <IconButton edge="end" aria-label="edit" onClick={()=>{handleEditModalOpen(doneCode)}} >
@@ -178,7 +230,7 @@ const Settings = () => {
       
              
               
-            </List>
+            </List> 
             <Typography variant='h5' style={{marginLeft: '40px'}}>Autre Codes </Typography>
 
             <List dense={false} style={{marginLeft:'50px'}}>
@@ -207,13 +259,15 @@ const Settings = () => {
 
         ))}
 
-            </List>
+            </List> 
+             </>}
+               
             
           {/* <Divider sx={{margin:"20px"}}/> */}
           <br/>
         <Stack direction="row" spacing={2}>
-        <Typography variant='h4' style={{marginLeft: '20px'}}>ًWifis</Typography>
-        <Button variant="contained" color="primary" style={{marginLeft: '20px' }} onClick={()=>setIsAddWifiModalOpen(true)} >Add Wifis</Button>
+        <Typography variant='h4' style={{marginLeft: '20px'}}>Modems</Typography>
+        <Button variant="contained" color="primary" style={{marginLeft: '20px' }} onClick={()=>setIsAddWifiModalOpen(true)} >Ajouter un modem</Button>
            </Stack>
 
         <Divider sx={{margin:"20px"}}/>
@@ -224,11 +278,15 @@ const Settings = () => {
                   <ListItem
                     secondaryAction={
                       <Stack direction="row" spacing={1}>
-                        <IconButton edge="end" aria-label="edit">
+                        <IconButton edge="end" aria-label="edit"
+                        onClick={()=>{setIsEditWifiModalOpen(true); setWifiToEdit(wifi); }}>
                         <EditIcon/>
                       </IconButton>
 
-                      <IconButton>
+                      <IconButton onClick={()=>{
+                        setWifiToEdit(wifi)
+                        setIsDeleteWifiModalOpen(true)
+                      }}>
                         <DeleteIcon/>
                       </IconButton>
                          </Stack>
@@ -252,9 +310,78 @@ const Settings = () => {
               
             </List>
 
+          <Divider sx={{margin:"20px"}}/>
+            <Stack direction="row" spacing={2}>
+        <Typography variant='h4' style={{marginLeft: '20px'}}>Stations</Typography>
+        <Button variant="contained" color="primary" style={{marginLeft: '20px' }} onClick={()=>setIsAddStationModalOpen(true)} >Ajouter une Station</Button>
+           </Stack>
+
+        <Divider sx={{margin:"20px"}}/>
+
+        <List dense={false}>
+              {
+                stations.map((station) => (
+                  <ListItem
+                    secondaryAction={
+                      <Stack direction="row" spacing={1}>
+                        <IconButton edge="end" aria-label="edit" onClick={
+                          ()=>{
+                            setStationToEdit(station); 
+                            setIsEditStationModalOpen(true); }
+                        }>
+                        <EditIcon/>
+                      </IconButton>
+
+                      <IconButton>
+                        <DeleteIcon/>
+                      </IconButton>
+                         </Stack>
+                      
+                    }
+
+                  >
+        <ListItemAvatar>
+          <LocationOnIcon sx={{height:"40px",width:"40px"}}/>
+        </ListItemAvatar>
+                    <ListItemText
+                      primary={station.name}
+                      secondary={station.latitude + ' , ' + station.longitude}
+                      primaryTypographyProps={{ style: { fontWeight: 'bold' } }}
+
+                    />
+                  </ListItem>
+                ) )
+              }
+
+              
+            </List>
+
+
+
           <CodeEditModal open={isEditModalOpen} setOpen={setIsEditModalOpen} code={codeToEdit} handleState={fetchCodes} />
           <CodeAddModal open={isAddCodeModalOpen} setOpen={setIsAddCodeModalOpen}  handleState={fetchCodes} />
           <WifiAddModal open={isAddWifiModalOpen} setOpen={setIsAddWifiModalOpen}  handleState={fetchwifis} />
+          <WifiEditModal open={isEditWifiModalOpen} setOpen={setIsEditWifiModalOpen} wifi={wifiToEdit}  handleState={fetchwifis} />
+          <WifiDeleteModal open={isDeleteWifiModalOpen} setOpen={setIsDeleteWifiModalOpen} wifi={wifiToEdit}  handleState={fetchwifis} />
+          <StationModal open={isAddStationModalOpen} setOpen={setIsAddStationModalOpen}  handleState={fetchstations} />
+          <StationEditModal open={isEditStationModalOpen} setOpen={setIsEditStationModalOpen} station={stationToEdit}  handleState={fetchstations} />
+
+
+
+          <Snackbar
+        anchorOrigin={{ vertical:"top", horizontal:"center" }}
+        open={isSnackOpen}
+        onClose={handleSnackClose}
+        autoHideDuration={3000}
+      
+        key={vertical + horizontal}
+      >
+        <Alert variant="filled" severity="error">
+        {element} supprimé !
+        </Alert>
+
+      </Snackbar>
+
           </div>
   )
 }

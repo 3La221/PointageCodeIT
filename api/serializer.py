@@ -96,4 +96,7 @@ class PointingSerializer(serializers.ModelSerializer):
         
         
     
-    
+class StationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Station
+        fields = "__all__"

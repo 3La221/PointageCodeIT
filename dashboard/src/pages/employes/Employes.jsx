@@ -56,7 +56,8 @@ export default function Employees() {
   )
 
   const handleClose = () => {
-    setState({ ...state, isSnackOpen: false });
+    setState({ ...state, isSnackOpen: false});
+
   };
   
   const handleState = (newState) =>{

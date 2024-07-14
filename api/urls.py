@@ -11,5 +11,6 @@ router.register(r"company_admin",CompanyAdminViewSet,basename="company-admin")
 router.register(r"superadmin",SuperAdminViewSet,basename="superadmin")
 router.register(r"code",CodeViewSet,basename="code")
 router.register(r"wifi",WifiViewSet,basename="wifi")
+router.register(r"station",StationViewSet,basename="station")
 
 urlpatterns = router.urls

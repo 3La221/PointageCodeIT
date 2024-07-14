@@ -28,7 +28,8 @@ class CompanyViewSet(viewsets.ViewSet):
                                     "wifis":[IsCompanyAdmin],
                                     "daily_attendance":[IsCompanyAdmin],
                                     'today_in_csv':[IsCompanyAdmin],
-                                    'today_pointings':[IsCompanyAdmin]}
+                                    'today_pointings':[IsCompanyAdmin],
+                                    "stations":[IsCompanyAdmin]}
     
     def get_permissions(self):
         try:
@@ -95,6 +96,14 @@ class CompanyViewSet(viewsets.ViewSet):
         company = get_object_or_404(queryset,pk=pk)
         wifis = company.wifis.all()
         serializer = WifiSerializer(wifis,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=["get"])
+    def  stations(self,request,pk=None):
+        queryset = Company.objects.all()
+        company = get_object_or_404(queryset,pk=pk)
+        stations = company.stations.all()
+        serializer = StationSerializer(stations,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
     
@@ -234,7 +243,7 @@ class EmployeViewSet(viewsets.ViewSet):
                     "first_name":user.first_name,
                     "last_name":user.last_name,
                     "username":user.username,
-                    "company":user.company.name,
+                    "company":user.employe.company.name,
                     "email":user.email,
                     "phone_number":user.phone_number,
                 },status=status.HTTP_200_OK)
@@ -591,7 +600,7 @@ class CodeViewSet(viewsets.ViewSet):
 
 class WifiViewSet(viewsets.ViewSet):
         
-        permission_classes_by_action = {"create":[IsCompanyAdmin] , "partial_update":[IsCompanyAdmin]}
+        permission_classes_by_action = {"create":[IsCompanyAdmin] , "partial_update":[IsCompanyAdmin] , 'destroy':[IsCompanyAdmin]}
         
         def get_permissions(self):
             try:
@@ -629,4 +638,35 @@ class WifiViewSet(viewsets.ViewSet):
             return Response({"message":"Wifi Deleted"},status=status.HTTP_204_NO_CONTENT)
         
 
+class StationViewSet(viewsets.ViewSet):
+    permission_classes_by_action = {"create":[IsCompanyAdmin] , "partial_update":[IsCompanyAdmin] , "destroy" : [IsCompanyAdmin]}
+        
+    def get_permissions(self):
+        try:
+            # Return permission_classes depending on `action`
+            return [permission() for permission in self.permission_classes_by_action.get(self.action, [IsAdminUser])]
+        except KeyError:
+            # Default to AllowAny if not specified otherwise
+            return [IsAdminUser()]
     
+    def create(self,request):
+        serializer = StationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def partial_update(self,request,pk=None):
+        queryset = Station.objects.all()
+        station = get_object_or_404(queryset,pk=pk)
+        serializer = StationSerializer(station,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self,request,pk=None):
+        queryset = Station.objects.all()
+        station = get_object_or_404(queryset,pk=pk)
+        station.delete()
+        return Response({"message":"Station Deleted"},status=status.HTTP_204_NO_CONTENT)
