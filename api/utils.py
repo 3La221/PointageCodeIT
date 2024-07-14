@@ -31,7 +31,7 @@ def increment_column(col):
         
 
         
-def is_employe_in_job(employe,longitude,latitude,bssid,ssid):
+def is_employe_in_job(employe,longitude,latitude,ssid,bssid):
     company = employe.company
     wifis = company.wifis.all()
     for w in wifis:

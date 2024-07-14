@@ -18,6 +18,7 @@ import StationModal from '../../components/modals/StationModal';
 import WifiEditModal from '../../components/modals/WifiEditModal';
 import WifiDeleteModal from '../../components/modals/WifiDeleteModal';
 import StationEditModal from '../../components/modals/StationEditModal';
+import StationDeleteModal from '../../components/modals/StationDeleteModal';
 
 
 
@@ -104,6 +105,7 @@ const Settings = () => {
   const [isDeleteWifiModalOpen, setIsDeleteWifiModalOpen] = useState(false)
   const [isAddStationModalOpen, setIsAddStationModalOpen] = useState(false)
   const [isEditStationModalOpen, setIsEditStationModalOpen] = useState(false)
+  const [isDeleteStationModalOpen , setIsDeleteStationModalOpen] = useState(false)
 
 
 
@@ -332,7 +334,12 @@ const Settings = () => {
                         <EditIcon/>
                       </IconButton>
 
-                      <IconButton>
+                      <IconButton onClick={
+                        ()=>{
+                          setStationToEdit(station)
+                          setIsDeleteStationModalOpen(true)
+                        }
+                      }>
                         <DeleteIcon/>
                       </IconButton>
                          </Stack>
@@ -365,7 +372,7 @@ const Settings = () => {
           <WifiDeleteModal open={isDeleteWifiModalOpen} setOpen={setIsDeleteWifiModalOpen} wifi={wifiToEdit}  handleState={fetchwifis} />
           <StationModal open={isAddStationModalOpen} setOpen={setIsAddStationModalOpen}  handleState={fetchstations} />
           <StationEditModal open={isEditStationModalOpen} setOpen={setIsEditStationModalOpen} station={stationToEdit}  handleState={fetchstations} />
-
+          <StationDeleteModal open={isDeleteStationModalOpen} setOpen={setIsDeleteStationModalOpen} station={stationToEdit}  handleState={fetchstations} />
 
 
           <Snackbar
