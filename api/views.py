@@ -356,7 +356,7 @@ class EmployeViewSet(viewsets.ViewSet):
                     pointing.status = "W"
                     pointing.save()
                     return Response({"message":"Clock In Successful"},status=status.HTTP_200_OK)
-                return Response({"message":"You have already clocked in"})
+                return Response({"message":"You have already clocked in"} , status=400)
             print(in_job)
             return Response({"message": "WiFi not authorized. + You're not in location"}, status=400)
         except KeyError:
