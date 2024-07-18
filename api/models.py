@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import  UserManager
 from enum import Enum 
-import datetime
+from datetime import datetime, timedelta , date
 from django.utils import timezone 
 from .utils import haversine
 
@@ -50,8 +50,24 @@ class Company_Admin(Profile):
 class Employe(Profile):
     company = models.ForeignKey("Company",on_delete=models.CASCADE,related_name="employes")
     current_station = models.ForeignKey("Station",on_delete=models.SET_NULL,related_name="employes",null=True)
+    function = models.CharField(max_length=50,null=True,blank=True)
+    is_first_login = models.BooleanField(default=True)
+    mac_address = models.CharField(max_length=30,null=True,blank=True)
     def __str__(self) -> str:
         return f'{self.username} Employe'
+    
+    @property
+    def week_working_time(self):
+        # Current date and time
+        now = datetime.now()
+        # Calculate the start of the week (Monday)
+        start_of_week = now - timedelta(days=now.weekday(), weeks=1)
+        # Filter pointings for the last week
+        last_week_pointings = [p for p in self.pointings.all() if p.clock_in_time.date() >= start_of_week.date() and p.status == Status.DONE.value]
+        # Calculate the sum of working hours for the last week
+        return sum([p.clock_out_time - p.clock_in_time for p in last_week_pointings], timedelta())
+    
+    
     
     class Meta:
         verbose_name = "Employe"
@@ -72,7 +88,7 @@ class Code(models.Model):
 class Pointing(models.Model):
     id = models.UUIDField(default=uuid.uuid4,primary_key=True,editable=False)
     employe = models.ForeignKey(Employe,on_delete=models.CASCADE,related_name="pointings")
-    date = models.DateField(default=datetime.date.today)
+    date = models.DateField(default=date.today)
     clock_in_time  = models.DateTimeField(default=timezone.now, null=False, blank=False)
     clock_out_time  = models.DateTimeField(null=True,blank=True)
     code = models.ForeignKey(Code,on_delete=models.CASCADE,related_name="pointings",null=True)
@@ -80,7 +96,7 @@ class Pointing(models.Model):
     
     @property
     def breaks_duration(self):
-        return sum([b.duration for b in self.breaks.all()],datetime.timedelta())
+        return sum([b.duration for b in self.breaks.all()],timedelta())
     
     def __str__(self) -> str:
         return f'{self.employe.username} {self.date} {self.code} '
@@ -92,7 +108,7 @@ class Break(models.Model):
     @property
     def duration(self):
         if self.end_time is None:
-            return datetime.timedelta(0)
+            return timedelta(0)
         return (self.end_time - self.start_time)/60/60
     
     

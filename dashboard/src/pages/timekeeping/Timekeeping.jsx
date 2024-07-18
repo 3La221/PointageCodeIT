@@ -120,7 +120,9 @@ const Timekeeping = () => {
     setOpen={setIsEditModalOpen}
       date={formattedDate}
        employeId={employeeId} 
-       codes={codes} />
+       codes={codes}
+       handleState={fetchAttendance(currentMonth.getFullYear(),String(currentMonth.getMonth() + 1).padStart(2, '0'))}
+       />
     </>
     
   );

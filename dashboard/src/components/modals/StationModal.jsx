@@ -9,7 +9,7 @@ const StationModal = ({ open, setOpen, handleState }) => {
 
 
   const modalWrapperStyle = {
-    display: 'flex',
+    display: open ? 'flex' : 'none',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
@@ -64,7 +64,29 @@ const StationModal = ({ open, setOpen, handleState }) => {
             value={newStation.name}
             onChange={handleChange}
             fullWidth
-            style={{ marginBottom: '10px' }}
+            style={{ marginBottom: '10px',marginTop: '10px'   }}
+          />
+          <TextField
+            id="longitude"
+            name="longitude"
+            label="Longitude"
+            variant="outlined"
+            value={newStation.longitude}
+            onChange={handleChange}
+            fullWidth
+            style={{ marginBottom: '10px',marginTop: '10px'   }}
+            type='number'
+          />
+          <TextField
+            id="latitude"
+            name="latitude"
+            label="Latitude"
+            variant="outlined"
+            value={newStation.latitude}
+            onChange={handleChange}
+            fullWidth
+            style={{ marginBottom: '10px',marginTop: '10px'   }}
+            type='number'
           />
           
           

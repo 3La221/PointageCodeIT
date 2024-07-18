@@ -1,8 +1,10 @@
+import { Typography } from '@mui/material';
 import axiosService from '../../helpers/axios';
 import React from 'react';
 import { Modal, Button } from 'rsuite';
 
-const WifiDeleteModal = ({open , setOpen , wifi , handleState}) => {
+
+const PermanantDeleteModal = ({open , setOpen , employe  , handleState}) => {
     const handleClose = () => setOpen(false);
 
     const modalWrapperStyle = {
@@ -13,13 +15,13 @@ const WifiDeleteModal = ({open , setOpen , wifi , handleState}) => {
     };
   
     const handleSubmit = () => {
-      if (!wifi) return; // Vérifier si employe est null ou undefined
+      if (!employe) return; // Vérifier si employe est null ou undefined
   
-      axiosService.delete(`wifi/${wifi.id}/`)
+      axiosService.delete(`employe/${employe.id}`)
         .then((res) => {
           console.log(res);
           handleClose();
-          handleState({ isSnackOpen: true , element : "Wifi"}); // Optionnel : donner un retour à l'utilisateur
+          handleState({ isSnackOpen: true }); // Optionnel : donner un retour à l'utilisateur
         })
         .catch((err) => {
           console.log(err);
@@ -31,17 +33,17 @@ const WifiDeleteModal = ({open , setOpen , wifi , handleState}) => {
       <div style={modalWrapperStyle}>
         <Modal open={open} onClose={handleClose} size="xs" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
           <Modal.Header>
-            <Modal.Title>Suprimmer {wifi?.ssid}</Modal.Title>
+            <Modal.Title>Suprimmer le compte de {employe?.last_name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            Êtes-vous sûr de vouloir suprimmer {wifi?.ssid} ?
+            Êtes-vous sûr de vouloir désactiver le compte de {employe?.username} ?
             <br />
             <br />
         
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={handleSubmit} appearance="primary" color='red'>
-              Suprimmer
+              Oui !
             </Button>
             <Button onClick={handleClose} appearance="subtle">
               Annuler
@@ -52,4 +54,4 @@ const WifiDeleteModal = ({open , setOpen , wifi , handleState}) => {
     );
 }
 
-export default WifiDeleteModal
+export default PermanantDeleteModal

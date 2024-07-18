@@ -12,7 +12,7 @@ const MonthCSVModal = ({ open, setOpen, handleState, employes }) => {
   const handleClose = () => setOpen(false);
 
   const modalWrapperStyle = {
-    display: 'flex',
+    display: open ? 'flex' : 'none',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',

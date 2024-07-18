@@ -1,5 +1,5 @@
 
-
+import { useEffect , useState } from 'react';
 
 const getUser = () =>{
     const user = JSON.parse(localStorage.getItem('auth')) || null;
@@ -30,6 +30,9 @@ const getCompanyName = () =>{
     return company_name;
 
 }
+
+export const ex_theme = localStorage.getItem('theme')  || 'light'
+
 
 export const API_URL = "http://127.0.0.1:8000/api"
 export const DOMAIN_URL = "http://127.0.0.1:8000/"

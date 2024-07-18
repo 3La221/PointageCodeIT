@@ -1,4 +1,4 @@
-import React from "react";
+import React , {useState} from "react";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
 import MuiAppBar from "@mui/material/AppBar";
@@ -12,6 +12,7 @@ import { DarkModeOutlined , LightModeOutlined, Person2Outlined } from "@mui/icon
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { logout } from "../helpers/actions";
+import AdminAccountModal from "./modals/AdminAccountModal";
 
 
 const drawerWidth = 240;
@@ -79,6 +80,8 @@ const AppBar = styled(MuiAppBar, {
 const TopBar = ({ open, handleDrawerOpen ,setMode}) => {
   const theme = useTheme()
 
+
+  const [isAddAdminAccountModalOpen, setIsAddAdminAccountModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openAnchor = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -91,6 +94,7 @@ const TopBar = ({ open, handleDrawerOpen ,setMode}) => {
 
 
   return (
+    <>
     <AppBar position="fixed" 
 // @ts-ignore
     open={open}>
@@ -108,8 +112,7 @@ const TopBar = ({ open, handleDrawerOpen ,setMode}) => {
           <MenuIcon />
         </IconButton>
 
-        <Typography>CodeIT Pointing</Typography>
-
+          <img src="src\assets\logo1.png" alt="logo" style={{width:"120px"}}/>
 <Box flexGrow={1} />
           <Stack direction="row" > 
             <IconButton color="inherit" onClick={
@@ -165,12 +168,14 @@ const TopBar = ({ open, handleDrawerOpen ,setMode}) => {
           marginTop : "35px"
         }}
       >
-        <MenuItem onClick={handleClose}>Add Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        <MenuItem onClick={logout}>Logout</MenuItem>
+        <MenuItem onClick={()=>{setIsAddAdminAccountModalOpen(true)}}>Ajouter Compte Admin</MenuItem>
+        <MenuItem onClick={logout}>Se Déconnecter</MenuItem>
       </Menu>
-      
+
     </AppBar>
+    <AdminAccountModal open={isAddAdminAccountModalOpen} setOpen={setIsAddAdminAccountModalOpen} handleState={()=>{}}/>
+    </>
+    
   );
 };
 

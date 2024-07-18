@@ -8,13 +8,16 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Outlet } from 'react-router-dom';
 import axiosService from '../../helpers/axios';
-import { getCompanyID } from '../../helpers/actions';
-import { Alert, Badge, IconButton, Snackbar, Stack, TextField, Typography } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { ex_theme, getCompanyID } from '../../helpers/actions';
+import {  IconButton, Stack, TextField } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import DeleteModal from '../../components/modals/DeleteModal';
 import { Divider } from 'rsuite';
+import EmployeEditModal from '../../components/modals/EmployeEditModal';
+import TablePagination from '@mui/material/TablePagination';
+
+
 export default function Employees() {
   const [employes, setEmployes] = useState([])  
   const company_id = getCompanyID()
@@ -44,9 +47,11 @@ export default function Employees() {
     isSnackOpen: false,
     vertical: "top",
     horizontal: "center",
+    phrase: "",
+    color: "error",
   });
 
-  const { vertical, horizontal, isSnackOpen } = state;
+  const { vertical, horizontal, isSnackOpen , phrase , color } = state;
 
 
   const filteredEmployes = employes.filter((employe)=> 
@@ -67,7 +72,14 @@ export default function Employees() {
 
   } 
 
+  const handleEdit = (newState) =>{
+    setState({ ...newState, isSnackOpen: true });
+    fetchEmployes();
+  }
 
+  const [mode, setMode] = React.useState(localStorage.getItem("theme") || 'light');
+
+  
 
   return (
     <>
@@ -102,7 +114,11 @@ export default function Employees() {
           {filteredEmployes.map((employe) => (
             <TableRow
               key={employe.id}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } , cursor: "pointer" , "&:hover":{backgroundColor:"#f5f5f5"}}}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } , cursor: "pointer" ,
+               "&:hover": mode === "light" ? {   backgroundColor:"#f5f5f5"} : {backgroundColor : "#575353"},
+                transition: "background-color 0.3s ease"
+              
+              }}
             >
               <TableCell component="th" scope="row">
                 {employe.first_name}
@@ -115,7 +131,10 @@ export default function Employees() {
               <TableCell align='right'> 
 
                 <Stack direction={"row"} > 
-                  <IconButton color="inherit">
+                  <IconButton color="inherit" onClick={ () => {
+                    setCurrentEmploye(employe)
+                    setIsEditModalOpen(true)
+                  }}>
                     <EditIcon/>
                   </IconButton>
 
@@ -135,13 +154,15 @@ export default function Employees() {
           ))}
         </TableBody>
       </Table>
+      
 
       <Outlet />
     </TableContainer>
     <Divider/>
     <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye} handleState={handleState} />
+    <EmployeEditModal open={isEditModalOpen} setOpen={setIsEditModalOpen} employe={currentEmploye} handleState={handleState} />
 
-    <Snackbar
+    {/* <Snackbar
         anchorOrigin={{ vertical:"top", horizontal:"center" }}
         open={isSnackOpen}
         onClose={handleClose}
@@ -149,11 +170,11 @@ export default function Employees() {
       
         key={vertical + horizontal}
       >
-        <Alert variant="filled" severity="error">
-        Utilisateur supprimé !
+        <Alert variant="filled" severity={color}>
+        {{phrase}}
         </Alert>
 
-      </Snackbar>
+      </Snackbar> */}
 
     </>
     

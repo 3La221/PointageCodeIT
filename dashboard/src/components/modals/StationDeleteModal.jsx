@@ -6,7 +6,7 @@ const StationDeleteModal = ({open , setOpen , station , handleState}) => {
     const handleClose = () => setOpen(false);
 
     const modalWrapperStyle = {
-      display: 'flex',
+      display: open ? 'flex' : 'none',
       justifyContent: 'center',
       alignItems: 'center',
       height: '100vh',
@@ -31,17 +31,17 @@ const StationDeleteModal = ({open , setOpen , station , handleState}) => {
       <div style={modalWrapperStyle}>
         <Modal open={open} onClose={handleClose} size="xs" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
           <Modal.Header>
-            <Modal.Title>Désactiver le compte de {station?.name}</Modal.Title>
+            <Modal.Title>Suprimmer la station  {station?.name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            Êtes-vous sûr de vouloir désactiver le compte de {station?.name} ?
+            Êtes-vous sûr de vouloir suprimmer  {station?.name} ?
             <br />
             <br />
         
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={handleSubmit} appearance="primary" color='red'>
-              Oui !
+              Suprimmer
             </Button>
             <Button onClick={handleClose} appearance="subtle">
               Annuler

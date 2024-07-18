@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -20,6 +20,9 @@ import ListEmployes from './pages/timekeeping/ListEmployes';
 import ProtectedRoute from './components/route/ProtectedRoute';
 import Login from './pages/Login'
 import Restore from './pages/restore/Restore';
+import { ex_theme } from './helpers/actions';
+import { useTheme } from '@mui/material';
+
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -88,11 +91,12 @@ const router = createBrowserRouter(
   )
 );
 
+
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-      <CustomProvider 
-      theme="light">
-        <RouterProvider router={router} />
-      </CustomProvider>
+    <CustomProvider theme={ex_theme} >
+      <RouterProvider router={router} />
+    </CustomProvider>
   </React.StrictMode>
 );

@@ -4,16 +4,17 @@ import { Modal, Button } from 'rsuite';
 import { MenuItem, TextField } from '@mui/material';
 import { getCompanyID } from '../../helpers/actions';
 
-const AttendanceEditModal = ({ open, setOpen, codes, date, employeId }) => {
+const AttendanceEditModal = ({ open, setOpen, codes, date, employeId,handleState }) => {
   const handleClose = () => setOpen(false);
   const company_id = getCompanyID();
 
   const modalWrapperStyle = {
-    display: 'flex',
+    display: open ? 'flex' : 'none',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
   };
+
 
   const [codeID, setCodeID] = useState('');
 
@@ -23,6 +24,9 @@ const AttendanceEditModal = ({ open, setOpen, codes, date, employeId }) => {
       .then((res) => {
         console.log(res.data);
         handleClose();
+        handleState()
+
+
       })
       .catch((err) => {
         console.error(err);
@@ -39,10 +43,11 @@ const AttendanceEditModal = ({ open, setOpen, codes, date, employeId }) => {
           <TextField
             id="outlined-select"
             select
-            label="Sélectionner"
+            label="Sélectionner Code"
             helperText="Veuillez sélectionner le code"
             onChange={(e) => { setCodeID(e.target.value) }}
             fullWidth
+            style={{ marginBottom: '10px', marginTop: '10px' }}
           >
             {codes.map((code) => (
               <MenuItem key={code.id} value={code.id} >
@@ -52,7 +57,7 @@ const AttendanceEditModal = ({ open, setOpen, codes, date, employeId }) => {
           </TextField>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={handleSubmit} appearance="primary" color='red'>
+          <Button onClick={handleSubmit} appearance="primary" >
             Valider
           </Button>
           <Button onClick={handleClose} appearance="subtle">

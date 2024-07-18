@@ -15,9 +15,12 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from .permissions import IsCompanyAdmin
 import openpyxl
+from openpyxl.styles import Border, Side
 from .utils import extract_time,increment_column,is_employe_in_job
 import os
 from django.conf import settings
+from django.db.models import Max
+
 
 
 
@@ -29,7 +32,10 @@ class CompanyViewSet(viewsets.ViewSet):
                                     "daily_attendance":[IsCompanyAdmin],
                                     'today_in_csv':[IsCompanyAdmin],
                                     'today_pointings':[IsCompanyAdmin],
-                                    "stations":[IsCompanyAdmin]}
+                                    "stations":[IsCompanyAdmin],
+                                    "today_stats":[IsCompanyAdmin],
+                                    "stats":[IsCompanyAdmin]
+                                    }
     
     def get_permissions(self):
         try:
@@ -123,10 +129,10 @@ class CompanyViewSet(viewsets.ViewSet):
             sheet[f'B{i}'] = f'{pointing.employe.first_name} {pointing.employe.last_name}'
             clock_in = extract_time(pointing.clock_in_time.isoformat())
             sheet[f'C{i}'] = clock_in
-            break_in = extract_time(pointing.break_start_time.isoformat()) if pointing.break_start_time else ''
-            sheet[f'D{i}'] = break_in
-            break_out = extract_time(pointing.break_end_time.isoformat()) if pointing.break_end_time else ''
-            sheet[f'E{i}'] = break_out
+            # break_in = extract_time(pointing.break_start_time.isoformat()) if pointing.break_start_time else ''
+            # sheet[f'D{i}'] = break_in
+            # break_out = extract_time(pointing.break_end_time.isoformat()) if pointing.break_end_time else ''
+            # sheet[f'E{i}'] = break_out
             clock_out = extract_time(pointing.clock_out_time.isoformat()) if pointing.clock_out_time else ''
             sheet[f'F{i}'] = clock_out
             i += 1
@@ -155,6 +161,50 @@ class CompanyViewSet(viewsets.ViewSet):
         
         return Response(serializer.data,status=status.HTTP_200_OK)
             
+    @action(detail=True, methods=["get"])
+    def today_stats(self, request, pk=None):
+        today = timezone.localdate()
+        company = Company.objects.get(id=pk)
+        employes = company.employes.all()
+        total_employes = employes.count()
+        total_clocked_in = Pointing.objects.filter(date=today,status="W").count()
+        total_clocked_out = Pointing.objects.filter(date=today, status="D").count()
+        total_break = Pointing.objects.filter(date=today, status="B").count()
+        total_absent = total_employes - total_clocked_in
+        total_done = Pointing.objects.filter(date=today , status="D").count()
+        data = [
+            {"value": total_clocked_in, "label": "Total Clocked In"},
+            {"value": total_clocked_out, "label": "Total Clocked Out"},
+            {"value": total_break, "label": "Total Break"},
+            {"value": total_absent, "label": "Total Absent"},
+            {"value": total_done, "label": "Total Done"},
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["GET"])
+    def stats(self, request, pk=None):
+        company_employees = Employe.objects.filter(company__id=pk)
+        max_working_time = timedelta(seconds=0)
+        employe_of_the_week = None
+
+        for employee in company_employees:
+            working_time = employee.week_working_time
+            if working_time > max_working_time:
+                max_working_time = working_time
+                employe_of_the_week = employee
+
+        if employe_of_the_week:
+            response_data = {
+                "employe_of_the_week": employe_of_the_week.username,
+                "max_week_working_time": max_working_time.total_seconds() / 3600  # Convert to hours
+            }
+        else:
+            response_data = {
+                "employe_of_the_week": None,
+                "max_week_working_time": 0
+            }
+
+        return Response(response_data, status=status.HTTP_200_OK)
         
 
 class EmployeViewSet(viewsets.ViewSet):
@@ -165,9 +215,11 @@ class EmployeViewSet(viewsets.ViewSet):
                                     'pointings':[IsCompanyAdmin],
                                     'create':[IsCompanyAdmin],
                                     'list':[IsAdminUser],
+                                    'destroy':[IsCompanyAdmin],
                                     'activate':[IsCompanyAdmin],
                                     'deactivate':[IsCompanyAdmin],
                                     'one_month_pointings_to_csv':[IsCompanyAdmin],
+                                    'open_login':[IsCompanyAdmin],
                                     }
     
     def get_permissions(self):
@@ -197,6 +249,21 @@ class EmployeViewSet(viewsets.ViewSet):
         employe = get_object_or_404(queryset,pk=pk)
         serializer = EmployeSerializer(employe)
         return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def partial_update(self,request,pk=None):
+        queryset = Employe.objects.all()
+        employe = get_object_or_404(queryset,pk=pk)
+        serializer = EmployeEditSerializer(employe,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self,request,pk=None):
+        queryset = Employe.objects.all()
+        employe = get_object_or_404(queryset,pk=pk)
+        employe.delete()
+        return Response({"message":"Employe Deleted"},status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=True,methods=["patch"])
     def activate(self,request,pk=None):
@@ -230,12 +297,29 @@ class EmployeViewSet(viewsets.ViewSet):
         try:
             username = request.data["username"]
             password = request.data["password"]
+            mac_address = request.data["mac_address"]
+            
+            
             
             user = authenticate(
             username = username,
             password = password
         )
+            
+            
+            
+            
+            
             if user:
+                if user.employe.is_first_login:
+                    user.employe.mac_address = mac_address
+                    user.employe.is_first_login = False
+                    user.employe.save()
+                
+                else:
+                    if user.employe.mac_address != mac_address:
+                        return Response({"message":"Invalid Mac Address"},status=status.HTTP_400_BAD_REQUEST)
+                
                 tokens = RefreshToken.for_user(user)
                 return Response({
                     "id":user.id,
@@ -250,7 +334,7 @@ class EmployeViewSet(viewsets.ViewSet):
             else:
                 return Response({"message":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
         except KeyError:
-            return Response({"message":"Please provide username and password"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":"Please provide username and password and mac-@"},status=status.HTTP_400_BAD_REQUEST)
     
     
     @action(detail=True,methods=["POST"])
@@ -382,21 +466,41 @@ class EmployeViewSet(viewsets.ViewSet):
         employe = get_object_or_404(Employe,id=pk)
         first_date = request.data["first_date"]
         last_date = request.data["last_date"]
-        pointings = employe.pointings.filter(date__gte=first_date,date__lte=last_date)
+        
+        start_date = datetime.strptime(first_date, "%Y-%m-%d")
+        end_date = datetime.strptime(last_date, "%Y-%m-%d")
+        date_difference_in_days = (end_date - start_date).days
+        
         wb = openpyxl.load_workbook("./excel/template_mois.xlsx")
         sheet = wb.active
         sheet["S4"] = first_date
         sheet["W4"] = last_date
+        sheet["A7"] = f'{employe.company.name}'
+        sheet["H11"] = f'{employe.first_name}'
+        sheet["R11"] = f'{employe.last_name}'
         cell = 'B'
-    
-        for p in pointings:
-            sheet["A7"] = f'{p.employe.company.name}'
-            sheet["H11"] = f'{p.employe.first_name}'
-            sheet["R11"] = f'{p.employe.last_name}'
-            
-            sheet[f'{cell}17'] = f'{p.date.day}'
-            sheet[f'{cell}18'] = f'{p.code}'
+        
+        thin = Side(border_style="thin", color="000000")
+
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
+        
+        for day in range(date_difference_in_days + 1):
+            current_date = start_date + timedelta(days=day)
+            pointing = employe.pointings.filter(date=current_date).first()
+            sheet[f'{cell}17'] = day + 1
+            sheet[f'{cell}17'].border = border 
+            if pointing:
+                sheet[f'{cell}18'] = pointing.code.name
+            else:
+                sheet[f'{cell}18'] = 'N/A'
+            sheet[f'{cell}18'].border = border 
+
+
             cell = increment_column(cell)
+                
+        
+        
+        
         filename = f'{employe.first_name}_{first_date}_{last_date}.xlsx'
         file_path = os.path.join(settings.MEDIA_ROOT, 'excel', filename)
         
@@ -466,11 +570,16 @@ class EmployeViewSet(viewsets.ViewSet):
         response['Content-Disposition'] = 'attachment; filename="employe_attendance.csv"'
         return response
     
-
+    @action(detail=True,methods=["get"])
+    def open_login(self,request,pk=None):
+        employe = get_object_or_404(Employe,id=pk)
+        employe.is_first_login = True
+        employe.save()
+        return Response({"message":"First login set to True"},status=status.HTTP_200_OK)
 
 class CompanyAdminViewSet(viewsets.ViewSet):
     
-    permission_classes_by_action = {"login":[AllowAny]}
+    permission_classes_by_action = {"login":[AllowAny] , "create":[IsCompanyAdmin]}
     
     def get_permissions(self):
         try:

@@ -13,6 +13,7 @@ import { Divider } from 'rsuite';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import RestoreIcon from '@mui/icons-material/Restore';
 import SnackBar from '../../components/SnackBar'
+import PermanantDeleteModal from '../../components/modals/PermanantDeleteModal';
 
 const Restore = () => {
     const navigate = useNavigate()
@@ -35,6 +36,7 @@ const Restore = () => {
     const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] = useState(false)
     const [currentEmploye, setCurrentEmploye] = useState(null)
     const [isSnackOpen, setIsSnackOpen] = useState(false)
+    const [isSnackDeleteOpen , setIsSnackDeleteOpen] = useState(false)
 
     const handleRestore = (employe) => {
       axiosService.patch(`employe/${employe.id}/activate/`).then((res)=>{
@@ -46,6 +48,12 @@ const Restore = () => {
         console.log(err)
       })
     }
+
+    const handleDeleteState = ()=>{
+      fetchEmployes()
+      setIsSnackDeleteOpen(true)  
+    }
+    
 
 
 
@@ -106,7 +114,10 @@ const Restore = () => {
     </TableContainer>
     <Divider/>
 
+    <PermanantDeleteModal open={isPermanentDeleteModalOpen} setOpen={setIsPermanentDeleteModalOpen} employe={currentEmploye} handleState={handleDeleteState} />
+
     <SnackBar isSnackOpen={isSnackOpen} handleClose={()=>setIsSnackOpen(false)} message="Employe Restored !" />
+    <SnackBar isSnackOpen={isSnackDeleteOpen} handleClose={()=>setIsSnackDeleteOpen(false)} message="Employe Deleted !" />
 
     </>
   )

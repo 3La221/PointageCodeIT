@@ -26,7 +26,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 
 export default function App() {
-  const [mode, setMode] = React.useState(localStorage.getItem("theme") || 'light');
+   const [mode, setMode] = React.useState(localStorage.getItem("theme") || 'light');
   const [open, setOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
@@ -47,6 +47,8 @@ export default function App() {
       <SideBar open={open} handleDrawerClose={handleDrawerClose} />
 
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+
+        
         <DrawerHeader />
         
         <Outlet />
@@ -58,3 +60,4 @@ export default function App() {
 
   );
 }
+

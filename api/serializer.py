@@ -3,6 +3,22 @@ from rest_framework import serializers
 
 from .models import *
 
+class EmployeEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employe
+        fields = ["first_name","last_name","email","phone_number","username"]
+        
+    def to_internal_value(self, data):
+        data["first_name"] = data["first_name"].upper()
+        data["last_name"] = data["last_name"].upper()
+            
+        phone_number = data["phone_number"]
+        data["username"] = f'{data["first_name"].strip().lower()}.{data["last_name"].lower()}{phone_number[-4:]}'
+            
+        return super().to_internal_value(data)
+        
+       
+
 class EmployeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employe
@@ -10,10 +26,11 @@ class EmployeSerializer(serializers.ModelSerializer):
         
     
     def to_internal_value(self, data):
-        first_name = data["first_name"].replace(" ","")
-        last_name = data["last_name"].replace(" ", "")
+        data["first_name"] = data["first_name"].upper()
+        data["last_name"] = data["last_name"].upper()
+        
         phone_number = data["phone_number"]
-        data["username"] = f'{first_name.strip().lower()}.{last_name.lower()}{phone_number[-4:]}'
+        data["username"] = f'{data["first_name"].strip().lower()}.{data["last_name"].lower()}{phone_number[-4:]}'
         
         return super().to_internal_value(data)
     

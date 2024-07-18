@@ -9,7 +9,7 @@ const WifiAddModal = ({ open, setOpen, handleState }) => {
   const handleClose = () => setOpen(false);
 
   const modalWrapperStyle = {
-    display: 'flex',
+    display: open ? 'flex' : 'none',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
@@ -61,7 +61,7 @@ const WifiAddModal = ({ open, setOpen, handleState }) => {
             value={newWifi.ssid}
             onChange={handleChange}
             fullWidth
-            style={{ marginBottom: '10px' }}
+            style={{ marginBottom: '10px' , marginTop: '10px'}}
           />
           <TextField
             id="bssid"
