@@ -89,11 +89,11 @@ const Restore = () => {
               <TableCell align='right'> 
 
                 <Stack direction={"row"} > 
-                  <IconButton color="inherit" onClick={()=>{setIsPermanentDeleteModalOpen(true) ; setCurrentEmploye(employe);}}>
+                  <IconButton  color="error"  onClick={()=>{setIsPermanentDeleteModalOpen(true) ; setCurrentEmploye(employe);}}>
                       <HighlightOffIcon/>
                   </IconButton>
 
-                  <IconButton color="inherit"  onClick={()=>handleRestore(employe)}>
+                  <IconButton color="primary"  onClick={()=>handleRestore(employe)}>
                         <RestoreIcon/>
                   </IconButton>
 

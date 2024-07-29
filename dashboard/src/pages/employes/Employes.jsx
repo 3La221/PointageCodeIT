@@ -1,26 +1,23 @@
-import  React , {useState, useEffect}from 'react';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import React, { useState, useEffect } from 'react';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Stack, TextField, Box, Typography, Tooltip } from '@mui/material';
+import { Edit as EditIcon, RemoveCircle as RemoveCircleIcon } from '@mui/icons-material';
 import { Outlet } from 'react-router-dom';
 import axiosService from '../../helpers/axios';
-import { ex_theme, getCompanyID } from '../../helpers/actions';
-import {  IconButton, Stack, TextField } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+import { getCompanyID } from '../../helpers/actions';
 import DeleteModal from '../../components/modals/DeleteModal';
-import { Divider } from 'rsuite';
 import EmployeEditModal from '../../components/modals/EmployeEditModal';
 import TablePagination from '@mui/material/TablePagination';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'; 
 
+const Employees = () => {
+  const [employes, setEmployes] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentEmploye, setCurrentEmploye] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [mode, setMode] = useState(localStorage.getItem("theme") || 'light');
 
-export default function Employees() {
-  const [employes, setEmployes] = useState([])  
-  const company_id = getCompanyID()
+  const company_id = getCompanyID();
 
   const fetchEmployes = () => {
     axiosService.get(`company/${company_id}/employes/?active=true`)
@@ -30,153 +27,126 @@ export default function Employees() {
       .catch((err) => {
         console.log(err);
       });
-  
+  };
 
-
-  }
   useEffect(() => {
     fetchEmployes();
+  }, []);
 
-  },[])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [currentEmploye, setCurrentEmploye] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-
-  const [state, setState] = React.useState({
-    isSnackOpen: false,
-    vertical: "top",
-    horizontal: "center",
-    phrase: "",
-    color: "error",
-  });
-
-  const { vertical, horizontal, isSnackOpen , phrase , color } = state;
-
-
-  const filteredEmployes = employes.filter((employe)=> 
-  employe.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  employe.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  employe.username.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  const handleClose = () => {
-    setState({ ...state, isSnackOpen: false});
-
+  const handleState = (newState) => {
+    fetchEmployes();
   };
-  
-  const handleState = (newState) =>{
 
-    setState({ ...newState, isSnackOpen: true });
-    fetchEmployes();
+  const filteredEmployes = employes.filter((employe) =>
+    employe.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    employe.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    employe.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  } 
-
-  const handleEdit = (newState) =>{
-    setState({ ...newState, isSnackOpen: true });
-    fetchEmployes();
-  }
-
-  const [mode, setMode] = React.useState(localStorage.getItem("theme") || 'light');
-
-  
+  const openFirstLoginBoolean = (id) => {
+    console.log("THERE")
+    axiosService.patch(`employe/${id}/`, {is_first_login: false})
+    .then((res) => {
+      console.log(res)
+      fetchEmployes();
+    })
+    .catch((err) => {
+      console.log(err);
+    }); }
 
   return (
     <>
+      <Box sx={{ mb: 2 }}>
+        
+        <h2 style={{marginBottom:"5px"}}>
+        Liste d'Employés
+        </h2>
+        <TextField
+          label="Rechercher des employés"
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          fullWidth
+          sx={{ mb: 3 }}
+        />
+      </Box>
 
-    <h2 style={{marginBottom:"20px"}}>
-    Liste d'Employés
-    </h2>
-  <TextField
-  label="Rechercher des employés"
-  variant="outlined"
-  value={searchQuery}
-  onChange={(e)=> setSearchQuery(e.target.value)}
-  style={{width:"100%", margin:"10px 0"}}
-  
-  
-  />
-
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-          <TableCell>Nom</TableCell>
-          <TableCell>Prénom</TableCell>
-          <TableCell>Nom d'utilisateur</TableCell>
-          <TableCell>Numéro de téléphone</TableCell>
-          <TableCell>Email</TableCell>
-          <TableCell align='center'></TableCell>
-            
-          </TableRow> 
-        </TableHead>
-        <TableBody>
-          {filteredEmployes.map((employe) => (
-            <TableRow
-              key={employe.id}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } , cursor: "pointer" ,
-               "&:hover": mode === "light" ? {   backgroundColor:"#f5f5f5"} : {backgroundColor : "#575353"},
-                transition: "background-color 0.3s ease"
-              
-              }}
-            >
-              <TableCell component="th" scope="row">
-                {employe.first_name}
-
-              </TableCell>
-              <TableCell>{employe.last_name}</TableCell>
-              <TableCell>{employe.username}</TableCell>
-              <TableCell>{employe.phone_number}</TableCell>
-              <TableCell>{employe.email}</TableCell>
-              <TableCell align='right'> 
-
-                <Stack direction={"row"} > 
-                  <IconButton color="inherit" onClick={ () => {
-                    setCurrentEmploye(employe)
-                    setIsEditModalOpen(true)
-                  }}>
-                    <EditIcon/>
-                  </IconButton>
-
-                  <IconButton color="inherit" onClick={()=>{setIsDeleteModalOpen(true) ; setCurrentEmploye(employe);}}>
-                    <RemoveCircleIcon/>
-                  </IconButton>
-
-                </Stack>
-              
-                
-
-
-              </TableCell>
-              
+      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <Table sx={{ minWidth: 650 }} aria-label="employes table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Nom</TableCell>
+              <TableCell>Prénom</TableCell>
+              <TableCell>Nom d'utilisateur</TableCell>
+              <TableCell>Numéro de téléphone</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
-
-          ))}
-        </TableBody>
-      </Table>
-      
-
-      <Outlet />
-    </TableContainer>
-    <Divider/>
-    <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye} handleState={handleState} />
-    <EmployeEditModal open={isEditModalOpen} setOpen={setIsEditModalOpen} employe={currentEmploye} handleState={handleState} />
-
-    {/* <Snackbar
-        anchorOrigin={{ vertical:"top", horizontal:"center" }}
-        open={isSnackOpen}
-        onClose={handleClose}
-        autoHideDuration={3000}
-      
-        key={vertical + horizontal}
-      >
-        <Alert variant="filled" severity={color}>
-        {{phrase}}
-        </Alert>
-
-      </Snackbar> */}
-
-    </>
-    
-  );
+          </TableHead>
+          <TableBody>
+            {filteredEmployes.map((employe) => (
+              <TableRow
+                key={employe.id}
+                sx={{
+                  '&:last-child td, &:last-child th': { border: 0 },
+                  cursor: 'pointer',
+                  '&:hover': mode === 'light' ? { backgroundColor: '#f0f0f0' } : { backgroundColor: '#424242' },
+                  transition: 'background-color 0.3s ease'
+                }}
+              >
+                <TableCell component="th" scope="row">
+                  {employe.first_name}
+                </TableCell>
+                <TableCell>{employe.last_name}</TableCell>
+                <TableCell>{employe.username}</TableCell>
+                <TableCell>{employe.phone_number}</TableCell>
+                <TableCell>{employe.email}</TableCell>
+                <TableCell align="right">
+                  <Stack direction="row" spacing={1}>
+                    <IconButton color="primary" onClick={() => {
+                      setCurrentEmploye(employe);
+                      setIsEditModalOpen(true);
+                    }}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => {
+                      setIsDeleteModalOpen(true);
+                      setCurrentEmploye(employe);
+                    }}>
+                      <RemoveCircleIcon />
+                    </IconButton>
+                    {
+  !employe.is_first_login ? 
+    <Tooltip title="Permettre à l'utilisateur de se connecter avec un autre téléphone" placement="top">
+      <IconButton color="primary" onClick={() => {
+        openFirstLoginBoolean(employe.id);
+      }}>
+        <AccountCircleIcon />
+      </IconButton>
+    </Tooltip>
+  :
+    <Tooltip title="L'utilisateur peut connecter " placement="top">
+      <IconButton  onClick={() => {
+      }}>
+        <AccountCircleIcon />
+      </IconButton>
+    </Tooltip>
 }
+
+                    
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <Outlet />
+      </TableContainer>
+
+      <DeleteModal open={isDeleteModalOpen} setOpen={setIsDeleteModalOpen} employe={currentEmploye} handleState={handleState} />
+      <EmployeEditModal open={isEditModalOpen} setOpen={setIsEditModalOpen} employe={currentEmploye} handleState={handleState} />
+    </>
+  );
+};
+
+export default Employees;

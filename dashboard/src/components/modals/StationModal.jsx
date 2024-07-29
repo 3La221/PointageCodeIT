@@ -1,42 +1,30 @@
 import React, { useState } from 'react';
-import axiosService from '../../helpers/axios';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Modal, Button } from 'rsuite';
 import { TextField } from '@mui/material';
 import { getCompanyID } from '../../helpers/actions';
+import axiosService from '../../helpers/axios';
+
 const StationModal = ({ open, setOpen, handleState }) => {
-    const handleClose = () => setOpen(false);
-
-
-
-  const modalWrapperStyle = {
-    display: open ? 'flex' : 'none',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-  };
-
-  
-  const company_id = getCompanyID();
-
-
   const [newStation, setNewStation] = useState({
-    name:"",
-    longitude:0.0,
-    latitude:1.1,
-    company: company_id,
-  }) ;
+    name: "",
+    longitude: 0.0,
+    latitude: 0.0,
+    company: getCompanyID(),
+  });
 
+  const handleClose = () => setOpen(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewStation((prevCode) => ({
-      ...prevCode,
+    setNewStation((prevStation) => ({
+      ...prevStation,
       [name]: value,
     }));
   };
 
   const handleSubmit = () => {
-
     axiosService
       .post('station/', newStation)
       .then((res) => {
@@ -50,8 +38,8 @@ const StationModal = ({ open, setOpen, handleState }) => {
   };
 
   return (
-    <div style={modalWrapperStyle}>
-      <Modal open={open} onClose={handleClose} size="xs" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+    <div style={{ display: open ? 'flex' : 'none', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Modal open={open} onClose={handleClose} size="lg">
         <Modal.Header>
           <Modal.Title>Ajouter une Station</Modal.Title>
         </Modal.Header>
@@ -64,7 +52,7 @@ const StationModal = ({ open, setOpen, handleState }) => {
             value={newStation.name}
             onChange={handleChange}
             fullWidth
-            style={{ marginBottom: '10px',marginTop: '10px'   }}
+            style={{ marginBottom: '10px', marginTop: '10px' }}
           />
           <TextField
             id="longitude"
@@ -74,7 +62,7 @@ const StationModal = ({ open, setOpen, handleState }) => {
             value={newStation.longitude}
             onChange={handleChange}
             fullWidth
-            style={{ marginBottom: '10px',marginTop: '10px'   }}
+            style={{ marginBottom: '10px', marginTop: '10px' }}
             type='number'
           />
           <TextField
@@ -85,18 +73,29 @@ const StationModal = ({ open, setOpen, handleState }) => {
             value={newStation.latitude}
             onChange={handleChange}
             fullWidth
-            style={{ marginBottom: '10px',marginTop: '10px'   }}
+            style={{ marginBottom: '10px', marginTop: '10px' }}
             type='number'
           />
-          
-          
+          <div style={{ height: '300px', width: '100%' }}>
+            <MapContainer center={[newStation.latitude, newStation.longitude]} zoom={13} style={{ height: '100%', width: '100%' }}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker position={[newStation.latitude, newStation.longitude]}>
+                <Popup>
+                  {newStation.name}
+                </Popup>
+              </Marker>
+            </MapContainer>
+          </div>
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={handleSubmit} appearance="primary">
             Sauvegarder
           </Button>
           <Button onClick={handleClose} appearance="subtle">
-            Anuler
+            Annuler
           </Button>
         </Modal.Footer>
       </Modal>
@@ -104,4 +103,4 @@ const StationModal = ({ open, setOpen, handleState }) => {
   );
 }
 
-export default StationModal
+export default StationModal;

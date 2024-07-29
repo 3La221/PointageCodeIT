@@ -29,45 +29,10 @@ const Dashboard = () => {
 
 
   return (
-    <div>
-      < >
-        <Typography variant='h3' style={{
-          display:"flex" ,
-          justifyContent:"center",
-          alignItems:"center",
-          marginBottom :"20px",
-          
-          width:"100%"}}>Les statistique de les dernier 7 jours </Typography>
-                 <Divider/>
-          <div
-          style={{
-            backgroundColor:"#eee",
-            width:"600px",
-            borderRadius:"30px",
-            margin:"10px",
-            display:"flex",
-            flexDirection:"column",
-            alignItems:"center"
-          }}
-          >
-            <h2>
-              L'employe de semaine
-            </h2>
+   <div>
+        {/* <img src="src\assets\logo1.png" alt="logo" style={{width:"300px"}}/> */}
 
-            <h3>
-              Abacha Ala Eddine Salah
-            </h3>
-          <h3>
-            1H 30 Min
-          </h3>
-
-          </div>
-
-
-      </>
-      
-      
-    </div>
+   </div>
   )
 }
 

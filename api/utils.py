@@ -1,5 +1,8 @@
 from datetime import datetime
 import math
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371  # Radius of the Earth in kilometers
@@ -44,3 +47,23 @@ def is_employe_in_job(employe,longitude,latitude,ssid,bssid):
     
     
     
+
+
+def send_welcome_email(employee):
+    subject = 'Welcome to Our Company'
+    from_email = 'codeitpointage@gmail.com'
+    recipient_list = [employee.email]
+    
+    print("hello")
+
+    # Render the HTML email template with context
+    html_content = render_to_string('test/welcome_email.html', {'first_name': employee.first_name})
+    
+    # Create the email message
+    email = EmailMessage(subject, html_content, from_email, recipient_list)
+    email.content_subtype = "html"  # Important for rendering HTML content
+
+    try:
+        email.send()
+    except Exception as e:
+        print(f'Failed to send email: {e}')

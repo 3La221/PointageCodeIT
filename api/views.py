@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from .permissions import IsCompanyAdmin
 import openpyxl
 from openpyxl.styles import Border, Side
-from .utils import extract_time,increment_column,is_employe_in_job
+from .utils import extract_time,increment_column,is_employe_in_job, send_welcome_email
 import os
 from django.conf import settings
 from django.db.models import Max
@@ -240,6 +240,7 @@ class EmployeViewSet(viewsets.ViewSet):
         serializer = EmployeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            send_welcome_email(serializer.instance)
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     

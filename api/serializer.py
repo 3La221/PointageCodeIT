@@ -6,14 +6,18 @@ from .models import *
 class EmployeEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employe
-        fields = ["first_name","last_name","email","phone_number","username"]
+        fields = ["first_name","last_name","email","phone_number","username",'is_first_login']
         
     def to_internal_value(self, data):
-        data["first_name"] = data["first_name"].upper()
-        data["last_name"] = data["last_name"].upper()
+        try:
             
-        phone_number = data["phone_number"]
-        data["username"] = f'{data["first_name"].strip().lower()}.{data["last_name"].lower()}{phone_number[-4:]}'
+            data["first_name"] = data["first_name"].upper()
+            data["last_name"] = data["last_name"].upper()
+                
+            phone_number = data["phone_number"]
+            data["username"] = f'{data["first_name"].strip().lower()}.{data["last_name"].lower()}{phone_number[-4:]}'
+        except KeyError:
+            pass
             
         return super().to_internal_value(data)
         
@@ -48,6 +52,8 @@ class EmployeSerializer(serializers.ModelSerializer):
         new_representation["phone_number"] = instance.phone_number
         new_representation["gender"] = instance.gender
         new_representation["active"] = instance.active
+        new_representation["function"] = instance.function
+        new_representation["is_first_login"] = instance.is_first_login
         
         
         return new_representation
