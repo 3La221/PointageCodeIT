@@ -41,7 +41,7 @@ def is_employe_in_job(employe,longitude,latitude,ssid,bssid):
             if ssid == w.ssid and bssid == w.bssid :
                 return True
     if employe.current_station:
-        return employe.current_station.is_employee_nearby(latitude, longitude)
+        return employe.current_station.is_employee_nearby(float(latitude), float(longitude))
     
     return False
     
