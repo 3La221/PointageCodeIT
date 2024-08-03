@@ -4,10 +4,12 @@ import axiosService from '../../helpers/axios';
 import { getCompanyID } from '../../helpers/actions';
 import { Stack } from 'rsuite';
 import { Divider, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
 
   const company_id = getCompanyID();
+  
 
   const [todayData,setTodayData] = useState([]);  
   const fetchTodayStats = () =>{

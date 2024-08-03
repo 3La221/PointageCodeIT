@@ -114,7 +114,7 @@ const SideBar = ({ open, handleDrawerClose }) => {
     },
   ];
 
-  const logo = getCompanyLogo();
+  // const logo = getCompanyLogo();
   const company_name = getCompanyName();
 
   return (
@@ -141,7 +141,7 @@ const SideBar = ({ open, handleDrawerClose }) => {
           transition: "0.25s",
         }}
         alt="Company Logo"
-        src={DOMAIN_URL + logo}
+        // src={DOMAIN_URL + logo}
       />
       <Typography
         align="center"

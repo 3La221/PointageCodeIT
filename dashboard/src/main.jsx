@@ -27,7 +27,11 @@ import { useTheme } from '@mui/material';
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-     <Route path="/" element={<App />}>
+     <Route path="/" element={
+    <ProtectedRoute>
+      <App />
+    </ProtectedRoute>   
+      }>
       <Route
         path="/"
         element={
@@ -82,7 +86,6 @@ const router = createBrowserRouter(
         </ProtectedRoute>
       } />
       <Route path="*" element={<h1>404 Not Found</h1>} />
-      <Route path="test" element={<PlainLayout>TEST</PlainLayout>} />
 
     </Route>
     <Route path="login" element={<Login />} />
@@ -95,7 +98,7 @@ const router = createBrowserRouter(
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <CustomProvider theme={ex_theme} >
+    <CustomProvider  >
       <RouterProvider router={router} />
     </CustomProvider>
   </React.StrictMode>
