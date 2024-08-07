@@ -88,17 +88,7 @@ const TopBar = ({ open, handleDrawerOpen, setMode }) => {
           </Typography>
 
           <Stack direction="row">
-            <IconButton
-              color="inherit"
-              onClick={() => {
-                localStorage.setItem('theme', theme.palette.mode === 'light' ? 'dark' : 'light');
-                setMode((prevMode) =>
-                  prevMode === 'light' ? 'dark' : 'light',
-                );
-              }}
-            >
-              {theme.palette.mode === 'light' ? <LightModeOutlined /> : <DarkModeOutlined />}
-            </IconButton>
+            
 
             <IconButton
               color="inherit"
