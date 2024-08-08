@@ -3,7 +3,7 @@ import createAuthRefreshInterceptor from "axios-auth-refresh";
 import { API_URL } from './actions';
 
 const axiosService = axios.create({
-    baseURL : "http://127.0.0.1:8000/api/",
+    baseURL : "http://86.38.217.190:8009/api/",
     headers : {
         "Content-Type":"application/json",
     }
@@ -27,7 +27,7 @@ const refreshAuthLogic = async(failedRequest) =>{
     
     const {refresh,user_id} = data 
     return axios.post("/token/refresh/",data,{
-        baseURL : `http://127.0.0.1:8000/api/`,
+        baseURL : `http://86.38.217.190:8009/api/`,
         headers :{
             Authorization : `Bearer ${refresh}`
         }

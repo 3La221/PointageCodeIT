@@ -30,7 +30,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'pointage.codeitdz.com',
+    'localhost',
+    '127.0.0.1',
+    'http://86.38.217.190:8009/',
+    '86.38.217.190'
+]
 
 
 # Application definition
@@ -164,6 +170,7 @@ STATIC_URL = '/static/'
 
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
