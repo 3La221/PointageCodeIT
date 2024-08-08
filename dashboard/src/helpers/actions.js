@@ -34,7 +34,7 @@ const getCompanyName = () =>{
 export const ex_theme = localStorage.getItem('theme')  || 'light'
 
 
-export const API_URL = "http://86.38.217.190:8009/api/"
+export const API_URL = "http://86.38.217.190:8009/api"
 export const DOMAIN_URL = "http://86.38.217.190:8009/"
 
 export {getUser, logout , getCompanyID , getCompanyLogo , getCompanyName}
