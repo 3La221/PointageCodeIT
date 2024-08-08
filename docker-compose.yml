@@ -2,9 +2,9 @@ services:
   backend:
     build:
       context: ./backend
-    command: gunicorn codeITPointage.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn codeITPointage.wsgi:application --bind 0.0.0.0:8009
     ports:
-      - "8000:8000"
+      - "8009:8009"
     volumes:
       - ./backend:/backend
     
@@ -17,7 +17,7 @@ services:
     volumes:
       - frontend_build:/dashboard/dist
     ports:
-      - "3010:3000"
+      - "3009:3009"
 
 
 volumes:
